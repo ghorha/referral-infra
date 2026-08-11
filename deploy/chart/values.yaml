@@ -1,0 +1,116 @@
+# =============================================================================
+# referral-service — chart defaults
+# -----------------------------------------------------------------------------
+# These are safe, generic defaults. Every real deploy layers a per-service file
+# on top (helm ... -f values/fs-<svc>.yaml) plus --set image.registry / image.tag.
+# The Helm RELEASE NAME becomes the object name (referral-auth-service, fs-family, ...) and
+# therefore the in-cluster DNS name — see _helpers.tpl.
+# =============================================================================
+
+# Optional overrides for the app name; normally leave blank and let the release
+# name drive object names.
+nameOverride: ""
+fullnameOverride: ""
+
+# Default replica count. Ignored when hpa.enabled=true (the HPA owns replicas).
+replicas: 1
+
+image:
+  # GHCR registry root — the org is now part of the registry path.
+  # Images are PUBLIC on GHCR, so no image-pull secret is required.
+  registry: ghcr.io/ghorha
+  # Overridden per service to fs-<svc> (NOT ghorha/fs-<svc> — the org lives in
+  # image.registry now).
+  repository: fs-service
+  # Default tag; override per-deploy with the built image SHA: --set image.tag=<sha>
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+# Image-pull secret(s). GHCR images are PUBLIC, so this defaults to empty and no
+# pull secret is referenced. Kept templated so a private registry can be wired in
+# later (populate with `- name: <secret>` and create it per namespace).
+imagePullSecrets: []
+
+# Container / Service port. Overridden per service (identity 8081, family 8082, ...).
+port: 8080
+
+# Plain, non-secret environment variables (rendered as name/value pairs).
+# Point at in-cluster DNS in the per-service file, e.g. FAMILY_URL: http://fs-family:8082
+#
+# JAVA_TOOL_OPTIONS is a chart-wide default so every service's JVM heap fits its
+# memory limit. At 70% of 512Mi the heap was ~358Mi, leaving only ~154Mi for
+# non-heap (metaspace + thread stacks + code cache + direct buffers) — not enough
+# for Spring Boot + Hibernate + Tomcat, so referral-auth-service was OOMKilled. With the 768Mi
+# limit below, 60% caps heap at ~460Mi and leaves ~300Mi for non-heap. Helm
+# deep-merges the per-service env keys (JWKS_URI, *_URL, ...) on top of this map.
+env:
+  JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=60.0"
+
+# List of k8s Secret names. EVERY key in each Secret is projected as an env var
+# (envFrom.secretRef). referral-db provides DATABASE_URL/USER/PASSWORD; referral-smtp provides
+# SMTP_HOST/PORT; referral-s3 provides S3_*. See deploy/base/secrets.example.yaml.
+envFrom: []
+
+# Sized for the JVM services (Spring Boot + Hibernate + Tomcat). 512Mi OOM-killed
+# referral-auth-service (heap + non-heap exceeded the limit), so the limit is 768Mi with heap
+# capped at 60% via JAVA_TOOL_OPTIONS above. Nodes have ~20Gi allocatable each, so
+# the fleet's ~4Gi of memory requests fits with plenty of headroom.
+resources:
+  requests:
+    cpu: 100m
+    memory: 384Mi
+  limits:
+    cpu: 500m
+    memory: 768Mi
+
+# Readiness + liveness both hit Spring Boot Actuator on the service port.
+# Generous initialDelay: JVM + Flyway migrations on cold start.
+probes:
+  path: /actuator/health
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 6
+
+# Applied at the pod level.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# Applied at the container level.
+securityContext:
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+service:
+  type: ClusterIP
+
+# Horizontal Pod Autoscaler — off by default; enable per service that may scale.
+# NOTE: referral-auth-service must NOT enable this until the per-instance JWT key is fixed
+# (PRODUCTION-READINESS.md 2.1).
+hpa:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 75
+
+# Pod Disruption Budget — on by default so voluntary disruptions keep a pod up.
+# NOTE: a minAvailable:1 PDB on a single-replica Deployment BLOCKS node drains,
+# so single-replica services (e.g. referral-auth-service) set pdb.enabled=false.
+pdb:
+  enabled: true
+  minAvailable: 1

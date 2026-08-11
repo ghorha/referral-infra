@@ -1,0 +1,15 @@
+image:
+  repository: referral-claim-service
+port: 8083
+replicas: 1
+hpa:
+  enabled: false
+pdb:
+  enabled: false
+env:
+  SPRING_PROFILES_ACTIVE: "prod"
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "3"
+  SERVER_PORT: "8083"
+envFrom:
+  - referral-db
+  - referral-jwt

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "referral-service.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "referral-service.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    {{- include "referral-service.selectorLabels" . | nindent 4 }}
+  ports:
+    # Service port == container port so in-cluster DNS is http://referral-<svc>:<port>.
+    - name: http
+      port: {{ .Values.port }}
+      targetPort: http
+      protocol: TCP

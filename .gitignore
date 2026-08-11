@@ -1,0 +1,12 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.log
+tfplan
+*.tfplan
+*.tfvars
+!terraform.tfvars.example
+.kube/
+*.jwk
+jwk.json

@@ -1,0 +1,12 @@
+apiVersion: v2
+name: referral-service
+description: >-
+  Generic Helm chart for a single Referral Spring Boot microservice on OKE.
+  One release per service (referral-auth-service, referral-listing-service, ...); the release name IS the
+  referral-<svc> name used by in-cluster DNS. Behaviour is driven entirely by a
+  per-service values file (see ../values/referral-<svc>.yaml).
+type: application
+# Chart version — bump on template changes.
+version: 0.1.0
+# Placeholder app version; the real image tag is set per-deploy via image.tag.
+appVersion: "1.0.0"

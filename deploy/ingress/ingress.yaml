@@ -1,0 +1,39 @@
+# Public Ingress for the Referral API.
+#
+# Routes https://api.<domain>/  ->  referral-api-gateway (Envoy) ClusterIP Service on :8080.
+# TLS is terminated by ingress-nginx using a Let's Encrypt cert that cert-manager
+# obtains automatically (see clusterissuer.yaml) and stores in the secret named below.
+#
+# REPLACE 163-192-201-183.sslip.io (in BOTH spec.tls[].hosts and spec.rules[].host) with the
+# real API hostname, e.g. api.referral.com. The A record for that host MUST point
+# at the ingress-nginx LoadBalancer's external IP BEFORE applying, or the HTTP-01
+# ACME challenge cannot complete and no certificate will be issued.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fs-api
+  namespace: referral
+  labels:
+    app.kubernetes.io/name: referral-api-gateway
+    app.kubernetes.io/part-of: referral
+  annotations:
+    # Tells cert-manager which issuer to use for the cert backing spec.tls below.
+    # Switch to letsencrypt-staging while testing to avoid prod rate limits.
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - 163-192-201-183.sslip.io          # <-- REPLACE with the real API hostname
+      secretName: api-referral-tls   # cert-manager writes the issued cert here
+  rules:
+    - host: 163-192-201-183.sslip.io        # <-- REPLACE with the real API hostname
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: referral-api-gateway
+                port:
+                  number: 8080

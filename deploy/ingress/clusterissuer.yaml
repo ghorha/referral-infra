@@ -1,0 +1,43 @@
+# cert-manager ClusterIssuers for Let's Encrypt (free, automated TLS certs).
+#
+# HTTP-01 challenge: cert-manager provisions a temporary Ingress (via the "nginx"
+# ingress class) so Let's Encrypt can reach http://<host>/.well-known/acme-challenge/...
+# This REQUIRES the domain's A record to already point at the ingress-nginx LB's
+# external IP, otherwise the challenge cannot be validated and the cert will not issue.
+#
+# Replace the email placeholder below before applying — Let's Encrypt sends expiry
+# and policy notices there. Apply with: kubectl apply -f clusterissuer.yaml
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    # Production ACME endpoint — issues browser-trusted certs (rate limited).
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: referral07122026@gmail.com # ops/ACME contact (from OCI account)
+    privateKeySecretRef:
+      name: letsencrypt-prod-account-key  # ACME account key (created by cert-manager)
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: nginx
+---
+# Staging issuer — use this first to dry-run the flow. Its certs are NOT trusted by
+# browsers, but its rate limits are far higher, so validate DNS + challenge here
+# before switching the Ingress annotation to letsencrypt-prod.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: referral07122026@gmail.com # ops/ACME contact (from OCI account)
+    privateKeySecretRef:
+      name: letsencrypt-staging-account-key
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: nginx

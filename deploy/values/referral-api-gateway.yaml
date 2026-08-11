@@ -1,0 +1,15 @@
+image:
+  repository: referral-api-gateway
+port: 8080
+replicas: 1
+hpa:
+  enabled: false
+pdb:
+  enabled: false
+env:
+  SPRING_PROFILES_ACTIVE: "prod"
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "3"
+  SERVER_PORT: "8080"
+envFrom:
+  - referral-redis
+  - referral-jwt

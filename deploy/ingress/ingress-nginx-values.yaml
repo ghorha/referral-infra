@@ -1,0 +1,37 @@
+# Helm values for the ingress-nginx chart on OCI OKE.
+#
+# This makes the ingress-nginx controller Service the SINGLE public entrypoint for
+# the whole Referral backend: one OCI Always-Free "flexible" LoadBalancer pinned
+# to a fixed 10 Mbps bandwidth (min == max == 10), which stays inside the Always-Free
+# tier. TLS is terminated here (cert-manager + Let's Encrypt) and traffic is proxied
+# to the referral-api-gateway (Envoy) ClusterIP Service.
+#
+# Install:
+#   helm install ingress-nginx ingress-nginx/ingress-nginx \
+#     --namespace ingress-nginx --create-namespace \
+#     -f ingress-nginx-values.yaml
+controller:
+  # One replica keeps us within Always-Free compute; the LB fronts a single pod.
+  replicaCount: 1
+
+  # Use the "nginx" IngressClass; referenced by ingress.yaml and the ClusterIssuer.
+  ingressClassResource:
+    name: nginx
+    enabled: true
+    default: false
+  ingressClass: nginx
+
+  service:
+    type: LoadBalancer
+    annotations:
+      # --- OCI Always-Free flexible LoadBalancer, pinned to 10 Mbps -------------
+      # load-balancer-type "lb" = the OCI Flexible Load Balancer (not the NLB).
+      oci.oraclecloud.com/load-balancer-type: "lb"
+      service.beta.kubernetes.io/oci-load-balancer-shape: "flexible"
+      # min == max == 10 keeps the shape fixed at 10 Mbps => stays Always-Free.
+      service.beta.kubernetes.io/oci-load-balancer-shape-flex-min: "10"
+      service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "10"
+
+  # Preserve the client source IP so rate limiting / logging see real addresses.
+  config:
+    use-forwarded-headers: "true"

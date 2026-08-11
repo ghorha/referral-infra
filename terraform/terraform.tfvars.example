@@ -1,0 +1,12 @@
+tenancy_ocid     = "ocid1.tenancy.oc1..aaaaaaaaEXAMPLEtenancyREPLACE"
+compartment_ocid = "ocid1.tenancy.oc1..aaaaaaaaEXAMPLEtenancyREPLACE" # root
+user_ocid        = "ocid1.user.oc1..aaaaaaaaEXAMPLEuserREPLACE"
+fingerprint      = "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99"
+private_key_path = "~/.oci/ghorha-phoenix/oci_api_key.pem"
+region           = "us-phoenix-1"
+cluster_name     = "referral"
+k8s_version      = "v1.34.2"
+node_pool_size   = 2
+node_shape       = "VM.Standard.A1.Flex"
+node_ocpus       = 2
+node_memory_gb   = 12

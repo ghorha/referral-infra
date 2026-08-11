@@ -1,0 +1,29 @@
+name: deploy-all
+on:
+  workflow_dispatch: {}
+permissions:
+  contents: read
+  packages: write
+jobs:
+  rollout:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { service: referral-api-gateway, port: 8080 }
+          - { service: referral-auth-service, port: 8081 }
+          - { service: referral-listing-service, port: 8082 }
+          - { service: referral-claim-service, port: 8083 }
+          - { service: referral-payment-service, port: 8084 }
+          - { service: referral-user-service, port: 8085 }
+          - { service: referral-admin-service, port: 8086 }
+          - { service: referral-notification-service, port: 8087 }
+          - { service: referral-support-service, port: 8088 }
+          - { service: referral-analytics-service, port: 8089 }
+          - { service: referral-audit-service, port: 8090 }
+          - { service: referral-orchestration-service, port: 8091 }
+    uses: ./.github/workflows/service-cd.yml
+    with:
+      service: ${{ matrix.service }}
+      port: ${{ matrix.port }}
+    secrets: inherit
