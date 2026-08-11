@@ -17,7 +17,7 @@ terraform {
       # Pinned to the 6.x line. For a fully reproducible plan, pin an exact
       # patch (e.g. "6.36.0") once you have run `terraform init` and confirmed
       # the version that resolves in your environment.
-      version = "~> 6.0"
+      version = "~> 7.0"
     }
   }
 
@@ -52,10 +52,13 @@ terraform {
 }
 
 # OCI provider — API-key (user principal) authentication.
+# Prefer inline private_key (file()) over private_key_path — path-based auth
+# was returning 401/404 NotAuthenticated against this Phoenix tenancy even when
+# the OCI CLI (same key) succeeded.
 provider "oci" {
-  tenancy_ocid     = var.tenancy_ocid
-  user_ocid        = var.user_ocid
-  fingerprint      = var.fingerprint
-  private_key_path = var.private_key_path
-  region           = var.region
+  tenancy_ocid = var.tenancy_ocid
+  user_ocid    = var.user_ocid
+  fingerprint  = var.fingerprint
+  private_key  = file(var.private_key_path)
+  region       = var.region
 }

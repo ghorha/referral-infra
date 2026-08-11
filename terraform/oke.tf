@@ -15,35 +15,12 @@ data "oci_identity_availability_domains" "ads" {
   compartment_id = var.tenancy_ocid
 }
 
-# All available OKE node images/versions for this tenancy/region.
-data "oci_containerengine_node_pool_option" "oke" {
-  node_pool_option_id = "all"
-  compartment_id      = var.compartment_ocid
-}
-
+# Node image: pin via var.node_image_ocid (required for Phoenix bootstrap).
+# Auto-discovery via oci_containerengine_node_pool_option was flaky on this
+# tenancy (401/RelatedResourceNotAuthorized from Terraform provider even when
+# the OCI CLI succeeds), so we require an explicit aarch64 OKE image OCID.
 locals {
-  # Auto-select the newest Oracle Linux 8, Arm/aarch64 (non-GPU) OKE image that
-  # matches k8s_version. Falls back to the explicit var.node_image_ocid if
-  # provided.
-  #
-  # IMPORTANT: worker nodes run the Always-Free Arm Ampere A1 shape
-  # (VM.Standard.A1.Flex), which is aarch64. The OKE node image OCID differs by
-  # CPU architecture — an x86 image will NOT boot on A1. So we filter FOR
-  # "aarch64" here (the x86 config previously excluded it).
-  k8s_version_number = replace(var.k8s_version, "v", "")
-
-  matching_node_images = [
-    for s in data.oci_containerengine_node_pool_option.oke.sources : s.image_id
-    if can(regex("Oracle-Linux-8", s.source_name))
-    && !can(regex("GPU", s.source_name))
-    && can(regex("aarch64", s.source_name))
-    && can(regex(local.k8s_version_number, s.source_name))
-  ]
-
-  discovered_node_image_id = length(local.matching_node_images) > 0 ? local.matching_node_images[length(local.matching_node_images) - 1] : null
-
-  # Effective image: explicit var wins; otherwise the auto-discovered one.
-  node_image_id = var.node_image_ocid != null ? var.node_image_ocid : local.discovered_node_image_id
+  node_image_id = var.node_image_ocid
 }
 
 # ---------------------------------------------------------------------------

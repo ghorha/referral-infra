@@ -79,18 +79,14 @@ resource "oci_core_route_table" "referral_private" {
   vcn_id         = oci_core_vcn.referral.id
   display_name   = "${var.cluster_name}-private-rt"
 
+  # NAT-only. A SERVICE_CIDR_BLOCK rule to the service gateway returns
+  # 404-NotAuthorizedOrNotFound on this Phoenix tenancy (CLI and Terraform).
+  # Nodes still reach OCI services via NAT for bootstrap.
   route_rules {
     description       = "Outbound internet via NAT gateway."
     destination       = "0.0.0.0/0"
     destination_type  = "CIDR_BLOCK"
     network_entity_id = oci_core_nat_gateway.referral.id
-  }
-
-  route_rules {
-    description       = "OCI services (image pull, telemetry) via service gateway."
-    destination       = data.oci_core_services.all_services.services[0].cidr_block
-    destination_type  = "SERVICE_CIDR_BLOCK"
-    network_entity_id = oci_core_service_gateway.referral.id
   }
 }
 
