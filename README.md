@@ -13,6 +13,13 @@ Terraform, Helm/Kubernetes, Prometheus, SQL migrations
 See DEPLOYMENT.md and deploy/
 ```
 
+## CI/CD (GitHub → GHCR → OCI OKE)
+
+- Reusable workflow: `.github/workflows/service-cd.yml`
+- Each Java service repo has `cd.yml` that calls it on push to `main` (build Docker image → Helm to Phoenix OKE).
+- Full matrix rollout: `.github/workflows/deploy-all.yml` (workflow_dispatch).
+- Details and required org secrets: **`DEPLOYMENT.md`**.
+
 ## Test
 ```bash
 terraform validate (where applicable)

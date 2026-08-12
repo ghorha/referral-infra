@@ -2,51 +2,36 @@
 okf_version: "0.1"
 type: concept
 id: cicd-pipelines
-title: "CI/CD Pipelines (GitHub Actions)"
-tags: [ci, cd, github-actions, blue-green, gradle, eslint, deployment]
-updated: 2026-07-10
+title: "CI/CD Pipelines (GitHub Actions → GHCR → OCI OKE)"
+tags: [ci, cd, github-actions, oci, oke, ghcr, helm]
+updated: 2026-08-12
 related:
   - ../index.md
-  - ./workspace-structure.md
   - ./deployment-infrastructure.md
-  - ../playbooks/local-dev-test-build.md
+  - ../../DEPLOYMENT.md
 ---
 
-# CI/CD Pipelines (GitHub Actions)
+# CI/CD Pipelines
 
-Nine workflows under `.github/workflows/`. Because there is no unified build graph
-(see [Workspace Structure](./workspace-structure.md)), pipelines operate per-unit /
-via change detection rather than a single monorepo task runner.
+Each `ghorha/referral-*-service` is its own git repo. Continuous delivery is **per service**, not monorepo.
 
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| `ci.yml` | push (all branches) + PR → main/staging | **Lint → build → merge-gate.** Checkstyle (backend) + ESLint (frontend) must pass, then Gradle + `next build`. `merge-gate-check` job gates merges. |
-| `ci-test-all-services.yml` | PR + push | Test matrix across services + a `test-summary` job. |
-| `build-and-push-images.yml` | push + PR + manual | **Change detection → build/push Docker images → update manifests.** Only rebuilds changed units. |
-| `deploy-to-dev.yml` | push + manual | Deploy to the dev environment. |
-| `deploy-to-staging.yml` | push + manual | Deploy to staging. |
-| `deploy-to-production.yml` | push + manual | Deploy to production (with pre-deploy checks). |
-| `staging.yml` | push | Regression → build/deploy → smoke → rollback-on-failure. |
-| `production.yml` | push | Full **blue-green** release: manual approval → regression → build/backup → deploy-green → pre-switch smoke → traffic-switch → post-deploy verify → cleanup-blue. |
-| `smoke-tests-daily.yml` | schedule (cron) + manual | Daily smoke tests. |
+## Backend path (Java services)
 
-## Pipeline notes
+1. **CI** — `ci.yml` in the service repo: Gradle `test` on self-hosted `macOS`/`ARM64`.
+2. **CD** — `cd.yml` on push to `main` / `workflow_dispatch`:
+   - Calls reusable `ghorha/referral-infra/.github/workflows/service-cd.yml@main`
+   - Builds `bootJar`, Docker `linux/arm64`, pushes `ghcr.io/ghorha/<service>:<sha>`
+   - Configures kubeconfig via OCI CLI → Phoenix OKE
+   - `helm upgrade --install` into namespace `referral`
 
-- **Lint is enforced.** The frontend `next.config.js` sets `eslint.ignoreDuringBuilds:false`,
-  so `next build` fails on ESLint errors (currently zero). Backend runs Checkstyle via
-  `./gradlew check`.
-- **Change detection** in `build-and-push-images.yml` is how a multi-unit repo avoids
-  rebuilding everything on every change.
-- **Environments:** dev → staging → production, promoted through the deploy workflows;
-  production uses blue-green with a manual approval gate.
+## Frontend
 
-## Gaps to address (from the audit)
+`referral-frontend` → Vercel (`deploy.yml`), not OKE.
 
-- Add **gitleaks** (secret scanning) to CI.
-- Keep the frontend `tsc`/lint/build gates green (they are, as of 2026-07-10).
-- Wire Jacoco's 90% coverage rule into `check` if coverage enforcement is desired
-  (currently defined but not gating).
+## Manual matrix
 
-See [Deployment & Infrastructure](./deployment-infrastructure.md) for what these
-pipelines deploy onto, and [local dev/test/build](../playbooks/local-dev-test-build.md)
-to reproduce CI steps locally.
+`referral-infra` `deploy-all.yml` rolls all Java services (workflow_dispatch).
+
+## Secrets rule
+
+Cross-repo reusable workflows **cannot** use `secrets: inherit`. Callers must map org secrets (`GH_PAT`, `OCI_CLI_*`, `OKE_CLUSTER_OCID`) explicitly. See root `DEPLOYMENT.md`.

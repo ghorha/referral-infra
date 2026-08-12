@@ -1,5 +1,8 @@
 # Reusable CD for ghorha referral Java services.
 # Builds the service repo (not referral-infra), pushes linux/arm64 to GHCR, helms to Phoenix OKE.
+#
+# Callers in OTHER repos must pass secrets: explicitly (secrets: inherit does not
+# work across repositories). See DEPLOYMENT.md.
 name: service-cd
 
 on:
