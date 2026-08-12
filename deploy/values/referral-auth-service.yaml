@@ -7,10 +7,12 @@ hpa:
 pdb:
   enabled: false
 env:
-  SPRING_PROFILES_ACTIVE: "prod"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "none"
+  SPRING_PROFILES_ACTIVE: "staging"
   SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "3"
   SERVER_PORT: "8081"
 envFrom:
+  - referral-mailgun
   - referral-db
   - referral-redis
   - referral-jwt
