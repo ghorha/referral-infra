@@ -1,0 +1,237 @@
+# ============================================================================
+# Helm Chart Values - Development Environment
+# ============================================================================
+
+global:
+  environment: dev
+  imageRegistry: ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
+  imagePullPolicy: Always  # Always pull latest in dev
+  
+  database:
+    host: referral-marketplace-dev.xxxxx.rds.amazonaws.com
+    port: 5432
+    name: referral_marketplace
+    username: referral_user
+  
+  redis:
+    host: referral-marketplace-dev.xxxxx.cache.amazonaws.com
+    port: 6379
+  
+  s3:
+    bucket: referral-marketplace-files-dev
+    region: us-east-1
+
+# API Gateway (smaller for dev)
+apiGateway:
+  replicaCount: 1
+  image:
+    tag: latest
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  autoscaling:
+    enabled: false  # Disabled in dev
+
+# Auth Service (smaller for dev)
+authService:
+  replicaCount: 1
+  image:
+    tag: latest
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 250m
+      memory: 512Mi
+  autoscaling:
+    enabled: false
+  config:
+    mailgunEnabled: false  # Use mock in dev
+
+# Listing Service (smaller for dev)
+listingService:
+  replicaCount: 1
+  image:
+    tag: latest
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 250m
+      memory: 512Mi
+  autoscaling:
+    enabled: false
+
+# Claim Service (smaller for dev)
+claimService:
+  replicaCount: 1
+  image:
+    tag: latest
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  autoscaling:
+    enabled: false
+  config:
+    storageType: s3
+    ocrEnabled: false  # Use mock in dev
+
+# Payment Service (smaller for dev)
+paymentService:
+  replicaCount: 1
+  image:
+    tag: latest
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 250m
+      memory: 512Mi
+  autoscaling:
+    enabled: false
+  config:
+    stripeEnabled: false  # Use mock in dev
+
+# User Service
+userService:
+  replicaCount: 1
+  image:
+    tag: latest
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 250m
+      memory: 512Mi
+  autoscaling:
+    enabled: false
+
+# Admin Service
+adminService:
+  replicaCount: 1
+  image:
+    tag: latest
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 250m
+      memory: 512Mi
+  autoscaling:
+    enabled: false
+
+# Notification Service
+notificationService:
+  replicaCount: 1
+  image:
+    tag: latest
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 250m
+      memory: 512Mi
+  autoscaling:
+    enabled: false
+
+# Support Service
+supportService:
+  replicaCount: 1
+  image:
+    tag: latest
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 250m
+      memory: 512Mi
+  autoscaling:
+    enabled: false
+
+# Analytics Service
+analyticsService:
+  replicaCount: 1
+  image:
+    tag: latest
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 250m
+      memory: 512Mi
+  autoscaling:
+    enabled: false
+
+# Audit Service
+auditService:
+  replicaCount: 1
+  image:
+    tag: latest
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 250m
+      memory: 512Mi
+  autoscaling:
+    enabled: false
+
+# Orchestration Service
+orchestrationService:
+  replicaCount: 1
+  image:
+    tag: latest
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  autoscaling:
+    enabled: false
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"  # HTTP OK for dev
+  hosts:
+    - host: api-dev.referralmarketplace.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: api-gateway
+          port: 8080
+  tls: []  # No TLS for dev (optional)
+
+# Monitoring (optional in dev)
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+  jaeger:
+    enabled: true
+
+# Pod Disruption Budgets (disabled in dev)
+podDisruptionBudget:
+  enabled: false
+

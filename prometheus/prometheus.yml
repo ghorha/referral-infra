@@ -1,0 +1,199 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'referral-marketplace'
+    environment: 'local'
+
+# Alerting configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+          # - alertmanager:9093
+
+# Rule files
+rule_files:
+  # - "alerts/*.yml"
+
+scrape_configs:
+  # ============================================================================
+  # Prometheus Self-Monitoring
+  # ============================================================================
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+          tier: 'monitoring'
+
+  # ============================================================================
+  # API Gateway (Port 8080)
+  # ============================================================================
+  - job_name: 'api-gateway'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+        labels:
+          service: 'api-gateway'
+          tier: 'gateway'
+          application: 'referral-marketplace'
+
+  # ============================================================================
+  # Auth Service (Port 8081)
+  # ============================================================================
+  - job_name: 'auth-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8081']
+        labels:
+          service: 'auth-service'
+          tier: 'core'
+          application: 'referral-marketplace'
+
+  # ============================================================================
+  # Listing Service (Port 8082)
+  # ============================================================================
+  - job_name: 'listing-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8082']
+        labels:
+          service: 'listing-service'
+          tier: 'core'
+          application: 'referral-marketplace'
+
+  # ============================================================================
+  # Claim Service (Port 8083)
+  # ============================================================================
+  - job_name: 'claim-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8083']
+        labels:
+          service: 'claim-service'
+          tier: 'core'
+          application: 'referral-marketplace'
+
+  # ============================================================================
+  # Payment Service (Port 8084)
+  # ============================================================================
+  - job_name: 'payment-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8084']
+        labels:
+          service: 'payment-service'
+          tier: 'core'
+          application: 'referral-marketplace'
+
+  # ============================================================================
+  # User Service (Port 8085)
+  # ============================================================================
+  - job_name: 'user-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8085']
+        labels:
+          service: 'user-service'
+          tier: 'core'
+          application: 'referral-marketplace'
+
+  # ============================================================================
+  # Admin Service (Port 8086)
+  # ============================================================================
+  - job_name: 'admin-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8086']
+        labels:
+          service: 'admin-service'
+          tier: 'admin'
+          application: 'referral-marketplace'
+
+  # ============================================================================
+  # Notification Service (Port 8087)
+  # ============================================================================
+  - job_name: 'notification-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8087']
+        labels:
+          service: 'notification-service'
+          tier: 'infrastructure'
+          application: 'referral-marketplace'
+
+  # ============================================================================
+  # Support Service (Port 8088)
+  # ============================================================================
+  - job_name: 'support-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8088']
+        labels:
+          service: 'support-service'
+          tier: 'admin'
+          application: 'referral-marketplace'
+
+  # ============================================================================
+  # Analytics Service (Port 8089)
+  # ============================================================================
+  - job_name: 'analytics-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8089']
+        labels:
+          service: 'analytics-service'
+          tier: 'infrastructure'
+          application: 'referral-marketplace'
+
+  # ============================================================================
+  # Audit Service (Port 8090)
+  # ============================================================================
+  - job_name: 'audit-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8090']
+        labels:
+          service: 'audit-service'
+          tier: 'infrastructure'
+          application: 'referral-marketplace'
+
+  # ============================================================================
+  # Orchestration Service (Port 8091)
+  # ============================================================================
+  - job_name: 'orchestration-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8091']
+        labels:
+          service: 'orchestration-service'
+          tier: 'gateway'
+          application: 'referral-marketplace'
+
+  # ============================================================================
+  # Infrastructure Services
+  # ============================================================================
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+        labels:
+          service: 'postgres'
+          tier: 'database'
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+        labels:
+          service: 'redis'
+          tier: 'cache'
+
+  # ============================================================================
+  # Jaeger (Distributed Tracing)
+  # ============================================================================
+  - job_name: 'jaeger'
+    static_configs:
+      - targets: ['jaeger:14269']
+        labels:
+          service: 'jaeger'
+          tier: 'monitoring'

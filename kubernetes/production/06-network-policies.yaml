@@ -1,0 +1,113 @@
+# =============================================================================
+# NetworkPolicies — enforce that the API gateway is the ONLY ingress into the
+# backend services. This is the in-cluster half of the auth trust boundary:
+# JwtAuthGlobalFilter strips/injects X-User-ID/Role/Email, and admin/support
+# services trust those headers — which is only sound if a pod cannot reach the
+# backends DIRECTLY (bypassing the gateway). These policies close that gap.
+#
+# ASSUMPTIONS (validate before applying):
+#   * Every Deployment/Pod carries an `app: <service-name>` label (matches the
+#     existing manifests, e.g. api-gateway/03, auth-service/04, user-service/05).
+#     ALL services must ship this label for the selectors below to match.
+#   * The CNI enforces NetworkPolicy (Calico, Cilium, etc.). On a CNI that
+#     ignores NetworkPolicy these are silently inert.
+#   * postgres/redis: if they run IN-cluster they must have `app: postgres` /
+#     `app: redis` labels (see the allow-datastore policy). If they are managed
+#     (RDS / ElastiCache) that policy simply matches nothing — harmless.
+#
+# SCOPE: policyTypes is Ingress ONLY. Egress is intentionally left unrestricted
+# so services keep reaching the database, Redis, DNS, and external providers
+# (Stripe/Mailgun/etc.) without additional egress rules. Tighten egress later.
+#
+# Mirror this file into infrastructure/kubernetes/{dev,staging} (adjust namespace).
+# =============================================================================
+---
+# 1) Default-deny all ingress in the namespace. Every pod starts unreachable;
+#    the policies below re-open only the required paths.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: production
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# 2) The gateway is the public entry point: allow ingress to it from anywhere
+#    (the external load balancer / ingress controller) on the HTTP port.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-gateway
+  namespace: production
+spec:
+  podSelector:
+    matchLabels:
+      app: api-gateway
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 8080
+---
+# 3) Backend services may ONLY receive traffic from the gateway (and from the
+#    orchestration BFF, which fans out to user/listing/claim). Direct pod-to-pod
+#    calls that would bypass the gateway's JWT validation are denied.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backends-from-gateway-only
+  namespace: production
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - auth-service
+          - user-service
+          - listing-service
+          - claim-service
+          - payment-service
+          - admin-service
+          - notification-service
+          - support-service
+          - analytics-service
+          - audit-service
+          - orchestration-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+        - podSelector:
+            matchLabels:
+              app: orchestration-service
+---
+# 4) In-cluster datastores (if any) accept connections from application pods in
+#    this namespace. No-op when postgres/redis are managed services outside the
+#    cluster (the selector matches nothing).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-datastores-from-namespace
+  namespace: production
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app
+        operator: In
+        values:
+          - postgres
+          - redis
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: production

@@ -1,0 +1,421 @@
+# ============================================================================
+# Helm Chart Values for Referral Marketplace
+# ============================================================================
+
+# Global configuration
+global:
+  environment: production
+  domain: referralmarketplace.com
+  
+  # Image registry
+  imageRegistry: your-account-id.dkr.ecr.us-east-1.amazonaws.com
+  imagePullPolicy: IfNotPresent
+  
+  # Database configuration (RDS)
+  database:
+    host: referral-marketplace-prod.xxxxx.us-east-1.rds.amazonaws.com
+    port: 5432
+    name: referral_marketplace
+    username: referral_user
+    # Password from secret
+  
+  # Redis configuration (ElastiCache)
+  redis:
+    host: referral-marketplace-prod.xxxxx.cache.amazonaws.com
+    port: 6379
+  
+  # S3 configuration
+  s3:
+    bucket: referral-marketplace-files-production
+    region: us-east-1
+
+# API Gateway
+apiGateway:
+  enabled: true
+  name: api-gateway
+  replicaCount: 3
+  
+  image:
+    repository: api-gateway
+    tag: latest
+  
+  service:
+    type: ClusterIP
+    port: 8080
+  
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Auth Service
+authService:
+  enabled: true
+  name: auth-service
+  replicaCount: 2
+  
+  image:
+    repository: auth-service
+    tag: latest
+  
+  service:
+    type: ClusterIP
+    port: 8081
+  
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+  
+  config:
+    mailgunEnabled: true
+    jwtExpiration: 86400000  # 24 hours
+
+# Listing Service
+listingService:
+  enabled: true
+  name: listing-service
+  replicaCount: 2
+  
+  image:
+    repository: listing-service
+    tag: latest
+  
+  service:
+    type: ClusterIP
+    port: 8082
+  
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+# Claim Service
+claimService:
+  enabled: true
+  name: claim-service
+  replicaCount: 2
+  
+  image:
+    repository: claim-service
+    tag: latest
+  
+  service:
+    type: ClusterIP
+    port: 8083
+  
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 15
+    targetCPUUtilizationPercentage: 70
+  
+  config:
+    storageType: s3
+    ocrEnabled: true
+
+# Payment Service
+paymentService:
+  enabled: true
+  name: payment-service
+  replicaCount: 2
+  
+  image:
+    repository: payment-service
+    tag: latest
+  
+  service:
+    type: ClusterIP
+    port: 8084
+  
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+  
+  config:
+    stripeEnabled: true
+
+# User Service
+userService:
+  enabled: true
+  name: user-service
+  replicaCount: 2
+  
+  image:
+    repository: user-service
+    tag: latest
+  
+  service:
+    type: ClusterIP
+    port: 8085
+  
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+# Admin Service
+adminService:
+  enabled: true
+  name: admin-service
+  replicaCount: 2
+  
+  image:
+    repository: admin-service
+    tag: latest
+  
+  service:
+    type: ClusterIP
+    port: 8086
+  
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+
+# Notification Service
+notificationService:
+  enabled: true
+  name: notification-service
+  replicaCount: 2
+  
+  image:
+    repository: notification-service
+    tag: latest
+  
+  service:
+    type: ClusterIP
+    port: 8087
+  
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+# Support Service
+supportService:
+  enabled: true
+  name: support-service
+  replicaCount: 2
+  
+  image:
+    repository: support-service
+    tag: latest
+  
+  service:
+    type: ClusterIP
+    port: 8088
+  
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+
+# Analytics Service
+analyticsService:
+  enabled: true
+  name: analytics-service
+  replicaCount: 2
+  
+  image:
+    repository: analytics-service
+    tag: latest
+  
+  service:
+    type: ClusterIP
+    port: 8089
+  
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+
+# Audit Service
+auditService:
+  enabled: true
+  name: audit-service
+  replicaCount: 2
+  
+  image:
+    repository: audit-service
+    tag: latest
+  
+  service:
+    type: ClusterIP
+    port: 8090
+  
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+
+# Orchestration Service
+orchestrationService:
+  enabled: true
+  name: orchestration-service
+  replicaCount: 3
+  
+  image:
+    repository: orchestration-service
+    tag: latest
+  
+  service:
+    type: ClusterIP
+    port: 8091
+  
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 15
+    targetCPUUtilizationPercentage: 70
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+  
+  hosts:
+    - host: api.referralmarketplace.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: api-gateway
+          port: 8080
+  
+  tls:
+    - secretName: referral-marketplace-tls
+      hosts:
+        - api.referralmarketplace.com
+
+# Monitoring
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+  
+  jaeger:
+    enabled: true
+    agent:
+      host: jaeger-agent
+      port: 6831
+
+# Pod Disruption Budgets
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+

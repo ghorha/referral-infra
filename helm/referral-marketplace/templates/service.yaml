@@ -1,0 +1,31 @@
+{{- range $service := list "api-gateway" "auth-service" "listing-service" "claim-service" "payment-service" "user-service" "admin-service" "notification-service" "support-service" "analytics-service" "audit-service" "orchestration-service" }}
+{{- $serviceConfig := index $.Values (regexReplaceAll "-" $service "" | camelcase) }}
+{{- if $serviceConfig.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $service }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: {{ $service }}
+    chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
+    release: {{ $.Release.Name }}
+  annotations:
+    {{- if $.Values.monitoring.prometheus.serviceMonitor.enabled }}
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ $serviceConfig.service.port }}"
+    prometheus.io/path: "/actuator/prometheus"
+    {{- end }}
+spec:
+  type: {{ $serviceConfig.service.type }}
+  ports:
+  - port: {{ $serviceConfig.service.port }}
+    targetPort: {{ $serviceConfig.service.port }}
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ $service }}
+{{- end }}
+{{- end }}
+

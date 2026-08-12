@@ -1,0 +1,269 @@
+# ============================================================================
+# Helm Chart Values - Staging Environment
+# ============================================================================
+
+global:
+  environment: staging
+  imageRegistry: ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
+  imagePullPolicy: IfNotPresent
+  
+  database:
+    host: referral-marketplace-staging.xxxxx.rds.amazonaws.com
+    port: 5432
+    name: referral_marketplace
+    username: referral_user
+  
+  redis:
+    host: referral-marketplace-staging.xxxxx.cache.amazonaws.com
+    port: 6379
+  
+  s3:
+    bucket: referral-marketplace-files-staging
+    region: us-east-1
+
+# API Gateway (production-like but smaller)
+apiGateway:
+  replicaCount: 2
+  image:
+    tag: staging-latest
+  resources:
+    requests:
+      cpu: 250m
+      memory: 384Mi
+    limits:
+      cpu: 750m
+      memory: 768Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+# Auth Service
+authService:
+  replicaCount: 2
+  image:
+    tag: staging-latest
+  resources:
+    requests:
+      cpu: 200m
+      memory: 384Mi
+    limits:
+      cpu: 400m
+      memory: 768Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+  config:
+    mailgunEnabled: true  # Real emails in staging
+
+# Listing Service
+listingService:
+  replicaCount: 2
+  image:
+    tag: staging-latest
+  resources:
+    requests:
+      cpu: 200m
+      memory: 384Mi
+    limits:
+      cpu: 400m
+      memory: 768Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+
+# Claim Service
+claimService:
+  replicaCount: 2
+  image:
+    tag: staging-latest
+  resources:
+    requests:
+      cpu: 300m
+      memory: 768Mi
+    limits:
+      cpu: 750m
+      memory: 1.5Gi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+  config:
+    storageType: s3
+    ocrEnabled: true  # Real OCR in staging
+
+# Payment Service
+paymentService:
+  replicaCount: 2
+  image:
+    tag: staging-latest
+  resources:
+    requests:
+      cpu: 200m
+      memory: 384Mi
+    limits:
+      cpu: 400m
+      memory: 768Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+  config:
+    stripeEnabled: true  # Use Stripe test mode
+
+# User Service
+userService:
+  replicaCount: 2
+  image:
+    tag: staging-latest
+  resources:
+    requests:
+      cpu: 200m
+      memory: 384Mi
+    limits:
+      cpu: 400m
+      memory: 768Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+
+# Admin Service
+adminService:
+  replicaCount: 1
+  image:
+    tag: staging-latest
+  resources:
+    requests:
+      cpu: 200m
+      memory: 384Mi
+    limits:
+      cpu: 400m
+      memory: 768Mi
+  autoscaling:
+    enabled: false  # Single instance OK for admin in staging
+
+# Notification Service
+notificationService:
+  replicaCount: 2
+  image:
+    tag: staging-latest
+  resources:
+    requests:
+      cpu: 200m
+      memory: 384Mi
+    limits:
+      cpu: 400m
+      memory: 768Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+
+# Support Service
+supportService:
+  replicaCount: 1
+  image:
+    tag: staging-latest
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 250m
+      memory: 512Mi
+  autoscaling:
+    enabled: false
+
+# Analytics Service
+analyticsService:
+  replicaCount: 1
+  image:
+    tag: staging-latest
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 250m
+      memory: 512Mi
+  autoscaling:
+    enabled: false
+
+# Audit Service
+auditService:
+  replicaCount: 1
+  image:
+    tag: staging-latest
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 250m
+      memory: 512Mi
+  autoscaling:
+    enabled: false
+
+# Orchestration Service
+orchestrationService:
+  replicaCount: 2
+  image:
+    tag: staging-latest
+  resources:
+    requests:
+      cpu: 250m
+      memory: 384Mi
+    limits:
+      cpu: 500m
+      memory: 768Mi
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+  hosts:
+    - host: api-staging.referralmarketplace.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: api-gateway
+          port: 8080
+  tls:
+    - secretName: staging-tls
+      hosts:
+        - api-staging.referralmarketplace.com
+
+# Monitoring
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+  jaeger:
+    enabled: true
+
+# Pod Disruption Budgets (enabled for staging)
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+

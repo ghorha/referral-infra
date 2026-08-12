@@ -1,0 +1,139 @@
+{{- range $service := list "auth-service" "listing-service" "claim-service" "payment-service" "user-service" "admin-service" "notification-service" "support-service" "analytics-service" "audit-service" "orchestration-service" }}
+{{- $serviceConfig := index $.Values (regexReplaceAll "-" $service "" | camelcase) }}
+{{- if $serviceConfig.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $service }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    app: {{ $service }}
+    version: v1
+    chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
+    release: {{ $.Release.Name }}
+spec:
+  replicas: {{ $serviceConfig.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ $service }}
+  template:
+    metadata:
+      labels:
+        app: {{ $service }}
+        version: v1
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "{{ $serviceConfig.service.port }}"
+        prometheus.io/path: "/actuator/prometheus"
+    spec:
+      containers:
+      - name: {{ $service }}
+        image: {{ $.Values.global.imageRegistry }}/{{ $serviceConfig.image.repository }}:{{ $serviceConfig.image.tag }}
+        imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+        ports:
+        - containerPort: {{ $serviceConfig.service.port }}
+          name: http
+          protocol: TCP
+        env:
+        - name: SERVER_PORT
+          value: "{{ $serviceConfig.service.port }}"
+        - name: SPRING_PROFILES_ACTIVE
+          value: {{ $.Values.global.environment }}
+        {{- if not (or (eq $service "analytics-service") (eq $service "orchestration-service")) }}
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: database-secret
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: database-secret
+              key: password
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:postgresql://{{ $.Values.global.database.host }}:{{ $.Values.global.database.port }}/{{ $.Values.global.database.name }}"
+        {{- end }}
+        {{- if or (eq $service "api-gateway") (eq $service "auth-service") (eq $service "orchestration-service") }}
+        - name: REDIS_HOST
+          value: {{ $.Values.global.redis.host }}
+        - name: REDIS_PORT
+          value: "{{ $.Values.global.redis.port }}"
+        {{- end }}
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: secret
+        {{- if eq $service "auth-service" }}
+        - name: MAILGUN_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mailgun-secret
+              key: api-key
+        - name: MAILGUN_DOMAIN
+          valueFrom:
+            secretKeyRef:
+              name: mailgun-secret
+              key: domain
+        - name: MAILGUN_ENABLED
+          value: "true"
+        {{- end }}
+        {{- if eq $service "payment-service" }}
+        - name: STRIPE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: stripe-secret
+              key: api-key
+        - name: STRIPE_WEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: stripe-secret
+              key: webhook-secret
+        - name: STRIPE_ENABLED
+          value: "true"
+        {{- end }}
+        {{- if eq $service "claim-service" }}
+        - name: STORAGE_TYPE
+          value: "s3"
+        - name: S3_BUCKET
+          value: {{ $.Values.global.s3.bucket }}
+        - name: S3_REGION
+          value: {{ $.Values.global.s3.region }}
+        - name: OCR_ENABLED
+          value: "true"
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: "/etc/secrets/google/credentials.json"
+        volumeMounts:
+        - name: google-credentials
+          mountPath: /etc/secrets/google
+          readOnly: true
+        {{- end }}
+        resources:
+          {{- toYaml $serviceConfig.resources | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: {{ $serviceConfig.service.port }}
+          initialDelaySeconds: 90
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: {{ $serviceConfig.service.port }}
+          initialDelaySeconds: 60
+          periodSeconds: 5
+          failureThreshold: 3
+      {{- if eq $service "claim-service" }}
+      volumes:
+      - name: google-credentials
+        secret:
+          secretName: google-vision-secret
+          items:
+          - key: credentials.json
+            path: credentials.json
+      {{- end }}
+{{- end }}
+{{- end }}
+

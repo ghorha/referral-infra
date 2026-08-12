@@ -1,0 +1,19 @@
+apiVersion: v2
+name: referral-marketplace
+description: Complete Referral Marketplace Platform Helm Chart
+version: 1.0.0
+appVersion: "1.0.0"
+
+keywords:
+  - referral
+  - marketplace
+  - microservices
+  - spring-boot
+  - nextjs
+
+maintainers:
+  - name: Platform Team
+    email: platform@referralmarketplace.com
+
+dependencies: []
+

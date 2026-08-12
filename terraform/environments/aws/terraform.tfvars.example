@@ -1,0 +1,58 @@
+# ============================================================================
+# Terraform Variables - Example Configuration
+# ============================================================================
+# Copy this file to terraform.tfvars and fill in your values
+# ============================================================================
+
+# Environment Configuration
+environment = "production"
+aws_region  = "us-east-1"
+owner       = "Platform Team"
+
+# VPC Configuration
+vpc_cidr             = "10.0.0.0/16"
+public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
+private_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24", "10.0.13.0/24"]
+database_subnet_cidrs = ["10.0.21.0/24", "10.0.22.0/24", "10.0.23.0/24"]
+
+# EKS Configuration
+eks_node_desired_size    = 3
+eks_node_min_size        = 2
+eks_node_max_size        = 10
+eks_compute_desired_size = 2
+eks_compute_min_size     = 1
+eks_compute_max_size     = 5
+
+# RDS Configuration
+rds_instance_class        = "db.t3.large"
+rds_allocated_storage     = 100
+rds_max_allocated_storage = 1000
+
+# Database Credentials (use AWS Secrets Manager in production)
+db_username = "referral_user"
+db_password = "CHANGE-ME-IN-PRODUCTION"  # Use secure password
+
+# Redis Configuration
+redis_node_type = "cache.t3.medium"
+
+# Application Secrets
+jwt_secret              = "CHANGE-ME-256-BIT-SECRET-KEY"
+stripe_api_key          = "sk_live_YOUR_KEY_HERE"
+stripe_webhook_secret   = "whsec_YOUR_SECRET_HERE"
+mailgun_api_key         = "YOUR_MAILGUN_KEY"
+mailgun_domain          = "mg.referralmarketplace.com"
+google_vision_credentials = "{}"  # JSON credentials
+
+# Domain Configuration
+frontend_domain     = "referralmarketplace.com"
+frontend_domains    = ["referralmarketplace.com", "www.referralmarketplace.com"]
+acm_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/CERT_ID"
+
+# Security
+admin_ip_whitelist = [
+  "YOUR.IP.ADDRESS.HERE/32"
+]
+
+# Monitoring
+alerts_sns_topic_arn = "arn:aws:sns:us-east-1:ACCOUNT_ID:referral-marketplace-alerts"
+
