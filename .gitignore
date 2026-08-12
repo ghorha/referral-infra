@@ -10,3 +10,10 @@ tfplan
 .kube/
 *.jwk
 jwk.json
+
+# Ensured defaults
+.DS_Store
+.env
+.env.*
+*.pem
+*.key

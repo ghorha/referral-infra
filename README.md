@@ -1,12 +1,40 @@
 # referral-infra
 
-Composition root for Referral (Vouch) under GitHub org **ghorha**.
+**Infrastructure** for the Vouch referral-code marketplace.
 
-- OCI region: **us-phoenix-1** (separate from piraho/Chicago)
-- OKE Always-Free Basic + Ampere A1 (arm64)
-- Images: `ghcr.io/ghorha/referral-*`
-- DB: Neon Postgres
-- Frontend: Vercel (`referral-frontend`)
-- CI/CD: self-hosted runners `runs-on: [self-hosted, macOS, ARM64]`
+Deploy assets: Terraform, Helm/Kubernetes manifests, Prometheus config, and cluster migrations.
 
-See `DEPLOYMENT.md` for bootstrap.
+## Stack
+Terraform, Helm/Kubernetes, Prometheus, SQL migrations
+
+## Quick start
+```bash
+# from this repo
+See DEPLOYMENT.md and deploy/
+```
+
+## Test
+```bash
+terraform validate (where applicable)
+```
+
+## Project layout
+```
+deploy/         # Helm chart + values + ingress/secrets helpers
+terraform/      # OCI/AWS modules & environments
+kubernetes/     # Reference manifests
+migrations.sql/ # Cluster-oriented schema reference
+prometheus/
+```
+
+## GitHub
+`https://github.com/ghorha/referral-infra`
+
+## Related
+- Product contracts: `ghorha/referral-product`
+- Deploy: `ghorha/referral-infra`
+- Cross-service tests: `ghorha/referral-tests`
+- AI skills/context: `ghorha/referral-agents`
+
+## For AI agents
+Repo-local guidance lives in **`.okf/`** (`index.md` + `concepts/`). Read that before making structural changes.
