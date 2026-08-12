@@ -93,12 +93,16 @@ jobs:
           OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
         run: |
           set -euo pipefail
-          echo "${HOME}/bin" >> "$GITHUB_PATH"
-          export PATH="${HOME}/bin:${PATH}"
+          # Self-hosted macOS runners often have a minimal PATH (no Homebrew).
+          for d in "${HOME}/bin" /opt/homebrew/bin /usr/local/bin; do
+            echo "$d" >> "$GITHUB_PATH"
+          done
+          export PATH="${HOME}/bin:/opt/homebrew/bin:/usr/local/bin:${PATH}"
           if ! command -v oci >/dev/null 2>&1; then
-            echo "::error::OCI CLI missing on runner."
+            echo "::error::OCI CLI missing on runner (checked ~/bin, /opt/homebrew/bin, /usr/local/bin)."
             exit 1
           fi
+          echo "Using oci at $(command -v oci)"
 
           CFG_DIR="${RUNNER_TEMP}/oci-ghorha"
           KUBECONFIG_PATH="${RUNNER_TEMP}/kubeconfig-ghorha"
