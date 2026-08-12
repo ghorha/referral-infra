@@ -38,3 +38,8 @@ prometheus/
 
 ## For AI agents
 Repo-local guidance lives in **`.okf/`** (`index.md` + `concepts/`). Read that before making structural changes.
+
+## Keeping docs current
+
+Any change in this repo must update **README.md** (for humans) and **`.okf/`** (for AI agents) in the same change set.
+

@@ -56,3 +56,5 @@ still requires a live smoke test** on the full stack — see
 
 External‑credential blockers (Stripe, Mailgun, Google OAuth, Google Vision OCR), the
 `/claims` vs `/transactions` domain product decision, and the live auth smoke test.
+
+- 2026-08-12: Added mandatory README + .okf doc-sync rule.

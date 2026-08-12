@@ -98,3 +98,13 @@ API Gateway (:8080)  — Spring Cloud Gateway (reactive)
 - [Add a new service to the monorepo](./playbooks/add-new-service.md)
 - [Run local dev, tests & builds](./playbooks/local-dev-test-build.md)
 - [Verify auth end-to-end (smoke test)](./playbooks/verify-auth-end-to-end.md)
+
+## Doc sync rule (mandatory)
+
+When code, APIs, config, ports, layout, or behavior in this repo change, update:
+
+1. Root `README.md` — human run/test/usage guidance
+2. This `.okf/` tree — agent concepts/index, plus a dated note in `log.md`
+
+Do not ship code-only changes when those surfaces moved.
+
