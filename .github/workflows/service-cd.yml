@@ -162,7 +162,11 @@ jobs:
             --file "${KUBECONFIG_PATH}" \
             --token-version 2.0.0 \
             --kube-endpoint PUBLIC_ENDPOINT
-          echo "KUBECONFIG=${KUBECONFIG_PATH}" >> "$GITHUB_ENV"
+          {
+            echo "KUBECONFIG=${KUBECONFIG_PATH}"
+            echo "OCI_CLI_CONFIG_FILE=${CFG_DIR}/config"
+            echo "PATH=${HOME}/bin:/opt/homebrew/bin:/usr/local/bin:${PATH}"
+          } >> "$GITHUB_ENV"
 
       - name: Checkout referral-infra (Helm chart + values)
         uses: actions/checkout@v4
@@ -180,12 +184,23 @@ jobs:
           SERVICE: ${{ inputs.service }}
           PORT: ${{ inputs.port }}
           SHA: ${{ steps.meta.outputs.sha }}
+          # OKE kubeconfigs use `exec: command: oci` — PATH must include Homebrew.
+          OCI_CLI_CONFIG_FILE: ${{ runner.temp }}/oci-ghorha/config
         run: |
           set -euo pipefail
           export PATH="${HOME}/bin:/opt/homebrew/bin:/usr/local/bin:${PATH}"
+          if [ -z "${KUBECONFIG:-}" ] || [ ! -f "${KUBECONFIG}" ]; then
+            echo "::error::KUBECONFIG missing from prior step"
+            exit 1
+          fi
+          command -v oci >/dev/null
+          command -v helm >/dev/null
+          # Prove cluster auth works before helm (surfaces exec-plugin PATH issues early).
+          kubectl --kubeconfig="${KUBECONFIG}" get ns referral >/dev/null
           helm upgrade --install "${SERVICE}" ./infra/deploy/chart \
             -n referral --create-namespace \
             -f "./infra/deploy/values/${SERVICE}.yaml" \
+            --kubeconfig "${KUBECONFIG}" \
             --set image.registry=ghcr.io/ghorha \
             --set image.tag="${SHA}" \
             --set port="${PORT}" \
