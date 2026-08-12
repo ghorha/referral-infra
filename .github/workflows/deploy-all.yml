@@ -27,6 +27,7 @@ jobs:
     with:
       service: ${{ matrix.service }}
       port: ${{ matrix.port }}
+      ref: main
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       OCI_CLI_USER: ${{ secrets.OCI_CLI_USER }}

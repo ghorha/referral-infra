@@ -6,12 +6,15 @@ Continuous delivery for Vouch backends:
 push to main (service repo)
   → GitHub Actions ci.yml (unit tests)
   → GitHub Actions cd.yml
-       → reusable workflow ghorha/referral-infra/.github/workflows/service-cd.yml
-            → ./gradlew bootJar
-            → docker build/push linux/arm64 → ghcr.io/ghorha/<service>:<sha>
-            → oci ce cluster create-kubeconfig (Phoenix OKE)
-            → helm upgrade --install -n referral
+       → gh workflow run deploy-service.yml on ghorha/referral-infra
+            → reusable service-cd.yml (secrets from referral-infra)
+                 → ./gradlew bootJar
+                 → docker build/push linux/arm64 → ghcr.io/ghorha/<service>:<sha>
+                 → oci ce cluster create-kubeconfig (Phoenix OKE)
+                 → helm upgrade --install -n referral (--force-conflicts)
 ```
+
+Service repos only need `GH_PAT`. OCI secrets stay on `referral-infra`.
 
 Region: **us-phoenix-1**. Frontend deploys separately to **Vercel** (`referral-frontend` `deploy.yml`), not OKE.
 

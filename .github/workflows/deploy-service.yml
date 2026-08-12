@@ -1,4 +1,5 @@
-# Deploy a single Java service (manual or repository_dispatch).
+# Deploy a single Java service. Prefer calling this from service repos
+# (they only need GH_PAT); OCI secrets live on referral-infra.
 name: deploy-service
 on:
   workflow_dispatch:
@@ -11,6 +12,11 @@ on:
         description: Container port
         required: true
         type: string
+      ref:
+        description: Git ref/SHA of the service repo to build
+        required: false
+        default: main
+        type: string
 
 permissions:
   contents: read
@@ -22,6 +28,7 @@ jobs:
     with:
       service: ${{ inputs.service }}
       port: ${{ fromJSON(inputs.port) }}
+      ref: ${{ inputs.ref }}
     secrets:
       GH_PAT: ${{ secrets.GH_PAT }}
       OCI_CLI_USER: ${{ secrets.OCI_CLI_USER }}

@@ -1,8 +1,7 @@
 # Reusable CD for ghorha referral Java services.
-# Builds the caller service repo, pushes linux/arm64 to GHCR, helms to Phoenix OKE.
-#
-# Callers in OTHER repos must pass secrets: explicitly (secrets: inherit does not
-# work across repositories). See DEPLOYMENT.md.
+# Prefer invoking via deploy-service.yml / deploy-all.yml on this repo so OCI
+# secrets resolve from referral-infra (org secrets are unreliable across
+# cross-repo workflow_call).
 name: service-cd
 
 on:
@@ -16,6 +15,11 @@ on:
         description: Container / service port
         required: true
         type: number
+      ref:
+        description: Git ref/SHA of the service repo
+        required: false
+        type: string
+        default: main
     secrets:
       GH_PAT:
         required: true
@@ -40,11 +44,19 @@ jobs:
   build-and-deploy:
     runs-on: [self-hosted, macOS, ARM64]
     steps:
-      # Caller workflow context: default checkout uses GITHUB_TOKEN for the service repo.
       - name: Checkout service repo
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          repository: ghorha/${{ inputs.service }}
+          ref: ${{ inputs.ref }}
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Resolve image tag
+        id: meta
+        run: |
+          SHA=$(git rev-parse HEAD)
+          echo "sha=${SHA}" >> "$GITHUB_OUTPUT"
+          echo "Building ${{ inputs.service }} @ ${SHA}"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -80,7 +92,7 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: |
-            ghcr.io/ghorha/${{ inputs.service }}:${{ github.sha }}
+            ghcr.io/ghorha/${{ inputs.service }}:${{ steps.meta.outputs.sha }}
             ghcr.io/ghorha/${{ inputs.service }}:latest
 
       - name: Configure kubeconfig for OKE
@@ -93,7 +105,6 @@ jobs:
           OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
         run: |
           set -euo pipefail
-          # Self-hosted macOS runners often have a minimal PATH (no Homebrew).
           for d in "${HOME}/bin" /opt/homebrew/bin /usr/local/bin; do
             echo "$d" >> "$GITHUB_PATH"
           done
@@ -108,34 +119,35 @@ jobs:
           KUBECONFIG_PATH="${RUNNER_TEMP}/kubeconfig-ghorha"
           mkdir -p "$CFG_DIR"
 
-          if grep -q '^\[GHORHA\]' "${HOME}/.oci/config" 2>/dev/null; then
-            export OCI_CLI_PROFILE=GHORHA
-            unset OCI_CLI_CONFIG_FILE || true
-          else
-            test -n "${OCI_CLI_USER}"
-            test -n "${OCI_CLI_TENANCY}"
-            test -n "${OCI_CLI_FINGERPRINT}"
-            test -n "${OCI_CLI_KEY_CONTENT}"
-            test -n "${OCI_CLI_REGION}"
-            printf '%s\n' "$OCI_CLI_KEY_CONTENT" > "${CFG_DIR}/oci_api_key.pem"
-            printf 'OCI_API_KEY\n' >> "${CFG_DIR}/oci_api_key.pem"
-            chmod 600 "${CFG_DIR}/oci_api_key.pem"
-            {
-              echo "[DEFAULT]"
-              echo "user=${OCI_CLI_USER}"
-              echo "fingerprint=${OCI_CLI_FINGERPRINT}"
-              echo "tenancy=${OCI_CLI_TENANCY}"
-              echo "region=${OCI_CLI_REGION}"
-              echo "key_file=${CFG_DIR}/oci_api_key.pem"
-            } > "${CFG_DIR}/config"
-            chmod 600 "${CFG_DIR}/config"
-            export OCI_CLI_CONFIG_FILE="${CFG_DIR}/config"
-          fi
+          # Prefer explicit secrets from this workflow (infra repo) over shared ~/.oci profiles.
+          test -n "${OCI_CLI_USER:-}" || { echo "::error::OCI_CLI_USER empty"; exit 1; }
+          test -n "${OCI_CLI_TENANCY:-}" || { echo "::error::OCI_CLI_TENANCY empty"; exit 1; }
+          test -n "${OCI_CLI_FINGERPRINT:-}" || { echo "::error::OCI_CLI_FINGERPRINT empty"; exit 1; }
+          test -n "${OCI_CLI_KEY_CONTENT:-}" || { echo "::error::OCI_CLI_KEY_CONTENT empty"; exit 1; }
+          test -n "${OCI_CLI_REGION:-}" || { echo "::error::OCI_CLI_REGION empty"; exit 1; }
+          test -n "${OKE_CLUSTER_OCID:-}" || { echo "::error::OKE_CLUSTER_OCID empty"; exit 1; }
 
-          test -n "${OKE_CLUSTER_OCID}"
+          printf '%s\n' "$OCI_CLI_KEY_CONTENT" > "${CFG_DIR}/oci_api_key.pem"
+          # Some secret stores omit the trailing marker line.
+          if ! grep -q 'END .*PRIVATE KEY' "${CFG_DIR}/oci_api_key.pem"; then
+            printf 'OCI_API_KEY\n' >> "${CFG_DIR}/oci_api_key.pem"
+          fi
+          chmod 600 "${CFG_DIR}/oci_api_key.pem"
+          {
+            echo "[DEFAULT]"
+            echo "user=${OCI_CLI_USER}"
+            echo "fingerprint=${OCI_CLI_FINGERPRINT}"
+            echo "tenancy=${OCI_CLI_TENANCY}"
+            echo "region=${OCI_CLI_REGION}"
+            echo "key_file=${CFG_DIR}/oci_api_key.pem"
+          } > "${CFG_DIR}/config"
+          chmod 600 "${CFG_DIR}/config"
+          export OCI_CLI_CONFIG_FILE="${CFG_DIR}/config"
+          unset OCI_CLI_PROFILE || true
+
           oci ce cluster create-kubeconfig \
             --cluster-id "$OKE_CLUSTER_OCID" \
-            --region "${OCI_CLI_REGION:-us-phoenix-1}" \
+            --region "${OCI_CLI_REGION}" \
             --file "${KUBECONFIG_PATH}" \
             --token-version 2.0.0 \
             --kube-endpoint PUBLIC_ENDPOINT
@@ -156,10 +168,10 @@ jobs:
         env:
           SERVICE: ${{ inputs.service }}
           PORT: ${{ inputs.port }}
-          SHA: ${{ github.sha }}
+          SHA: ${{ steps.meta.outputs.sha }}
         run: |
           set -euo pipefail
-          # --force-conflicts: adopt fields previously owned by kubectl client-side apply
+          export PATH="${HOME}/bin:/opt/homebrew/bin:/usr/local/bin:${PATH}"
           helm upgrade --install "${SERVICE}" ./infra/deploy/chart \
             -n referral --create-namespace \
             -f "./infra/deploy/values/${SERVICE}.yaml" \
