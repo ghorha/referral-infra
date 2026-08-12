@@ -12,5 +12,6 @@ env:
   SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "3"
   SERVER_PORT: "8091"
 envFrom:
+  - referral-redis
   - referral-db
   - referral-jwt
