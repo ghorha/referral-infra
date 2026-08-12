@@ -35,3 +35,7 @@ Each `ghorha/referral-*-service` is its own git repo. Continuous delivery is **p
 ## Secrets rule
 
 Cross-repo reusable workflows **cannot** use `secrets: inherit`. Callers must map org secrets (`GH_PAT`, `OCI_CLI_*`, `OKE_CLUSTER_OCID`) explicitly. See root `DEPLOYMENT.md`.
+
+## Self-hosted runner caveats
+- Isolate `DOCKER_CONFIG` per deploy job; never logout on shared Docker daemon (parallel GHCR 403).
+- Persist `KUBECONFIG`, `OCI_CLI_CONFIG_FILE`, and Homebrew PATH for OKE exec auth in Helm.

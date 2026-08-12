@@ -91,7 +91,7 @@ jobs:
       # post-step logout races mid-push (GHCR 403).
       - name: Log in to GHCR
         env:
-          DOCKER_CONFIG: ${{ runner.temp }}/docker-config-${{ github.job }}-${{ github.run_id }}
+          DOCKER_CONFIG: ${{ runner.temp }}/docker-config-${{ inputs.service }}-${{ github.run_id }}-${{ github.run_attempt }}
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           set -euo pipefail
@@ -99,6 +99,8 @@ jobs:
           USERNAME=$(curl -fsSL -H "Authorization: Bearer ${GH_PAT}" https://api.github.com/user | python3 -c 'import json,sys; print(json.load(sys.stdin)["login"])')
           echo "$GH_PAT" | docker login ghcr.io -u "$USERNAME" --password-stdin
           echo "DOCKER_CONFIG=${DOCKER_CONFIG}" >> "$GITHUB_ENV"
+          # Keep buildx from falling back to the shared ~/.docker config.
+          echo "DOCKER_CONFIG=${DOCKER_CONFIG}" >> "$GITHUB_PATH" || true
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
