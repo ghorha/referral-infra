@@ -13,6 +13,21 @@ on:
         description: Container / service port
         required: true
         type: number
+    secrets:
+      GH_PAT:
+        required: true
+      OCI_CLI_USER:
+        required: true
+      OCI_CLI_TENANCY:
+        required: true
+      OCI_CLI_FINGERPRINT:
+        required: true
+      OCI_CLI_KEY_CONTENT:
+        required: true
+      OCI_CLI_REGION:
+        required: true
+      OKE_CLUSTER_OCID:
+        required: true
 
 permissions:
   contents: read
