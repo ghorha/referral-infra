@@ -57,6 +57,11 @@ gh workflow run deploy-all.yml --repo ghorha/referral-infra
 
 Jobs target `runs-on: [self-hosted, macOS, ARM64]` (ARM images for the OKE node pool). The runner needs Docker, JDK 17, Helm, and OCI CLI.
 
+
+
+### Self-hosted Docker note
+Parallel `deploy-all` jobs share one Docker daemon. Each job uses an isolated `DOCKER_CONFIG` and does not `docker logout`, avoiding mid-push GHCR 403 races.
+
 ## Troubleshooting
 
 - **`Input required and not supplied: token`**: `GH_PAT` must be set as an org secret (and preferably mirrored on `referral-infra`). Service CD maps it into the reusable workflow.
