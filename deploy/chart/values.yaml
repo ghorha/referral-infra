@@ -29,7 +29,8 @@ image:
 # Image-pull secret(s). GHCR images are PUBLIC, so this defaults to empty and no
 # pull secret is referenced. Kept templated so a private registry can be wired in
 # later (populate with `- name: <secret>` and create it per namespace).
-imagePullSecrets: []
+imagePullSecrets:
+  - name: ghcr-pull
 
 # Container / Service port. Overridden per service (identity 8081, family 8082, ...).
 port: 8080

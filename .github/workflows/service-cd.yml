@@ -84,15 +84,6 @@ jobs:
             ghcr.io/ghorha/${{ inputs.service }}:${{ github.sha }}
             ghcr.io/ghorha/${{ inputs.service }}:latest
 
-      - name: Make GHCR package public (first-time pull from cluster)
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
-        run: |
-          # Ignore failures if already public / API shape differs
-          gh api --method PATCH \
-            "/orgs/ghorha/packages/container/${{ inputs.service }}/visibility" \
-            -f visibility=public || true
-
       - name: Install and configure OCI CLI
         env:
           OCI_CLI_USER: ${{ secrets.OCI_CLI_USER }}
@@ -149,10 +140,12 @@ jobs:
           PORT: ${{ inputs.port }}
           SHA: ${{ github.sha }}
         run: |
+          # Cluster uses private GHCR + imagePullSecret ghcr-pull (see bootstrap).
           helm upgrade --install "${SERVICE}" ./infra/deploy/chart \
             -n referral --create-namespace \
             -f "./infra/deploy/values/${SERVICE}.yaml" \
             --set image.registry=ghcr.io/ghorha \
             --set image.tag="${SHA}" \
             --set port="${PORT}" \
+            --set 'imagePullSecrets[0].name=ghcr-pull' \
             --wait --timeout 10m
