@@ -58,16 +58,16 @@ envFrom: []
 resources:
   requests:
     cpu: 100m
-    memory: 384Mi
+    memory: 256Mi
   limits:
     cpu: 500m
-    memory: 768Mi
+    memory: 640Mi
 
 # Readiness + liveness both hit Spring Boot Actuator on the service port.
 # Generous initialDelay: JVM + Flyway migrations on cold start.
 probes:
   path: /actuator/health
-  initialDelaySeconds: 30
+  initialDelaySeconds: 50
   periodSeconds: 10
   timeoutSeconds: 3
   successThreshold: 1
@@ -76,9 +76,9 @@ probes:
 # Applied at the pod level.
 podSecurityContext:
   runAsNonRoot: true
-  runAsUser: 1000
-  runAsGroup: 1000
-  fsGroup: 1000
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
   seccompProfile:
     type: RuntimeDefault
 

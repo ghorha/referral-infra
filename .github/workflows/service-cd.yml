@@ -1,45 +1,16 @@
-# Reusable CD workflow for Referral Java services (github.com/ghorha).
-#
-# Flow: build + test the service -> build & push its container image to the
-# GitHub Container Registry (GHCR) as a linux/arm64 image -> `helm upgrade` it
-# onto the OKE cluster.
-#
-# Why arm64: the OCI Always-Free compute is Ampere A1 (Arm), so the cluster
-# nodes are arm64 and images must be built for that architecture.
-#
-# Registry: images live at ghcr.io/ghorha/<service> and are pushed with the
-# built-in GITHUB_TOKEN (no separate registry credentials needed). This requires
-# `permissions: packages: write` on both this workflow and the calling job.
-#
-# Image visibility: GHCR packages default to PRIVATE on first push. These images
-# are pulled anonymously by the cluster (no imagePullSecret is configured), so
-# the FIRST time a service's package is created you must make it PUBLIC once in
-# the repo's Packages settings (Package settings -> Change visibility -> Public).
-# After that, subsequent pushes stay public.
-#
-# Called by each service repo's .github/workflows/cd.yml on push to main, and by
-# referral-infra's deploy-all.yml for full / first-time rollouts. Consumers must pass
-# `secrets: inherit` and grant `packages: write` on the calling job.
-#
-# Required repository / organization secrets (OCI, for OKE access only):
-#   OCI_CLI_USER         - OCID of the OCI user used for API-key auth
-#   OCI_CLI_TENANCY      - OCID of the tenancy
-#   OCI_CLI_FINGERPRINT  - Fingerprint of the API signing key
-#   OCI_CLI_KEY_CONTENT  - PEM contents of the API signing private key
-#   OCI_CLI_REGION       - OCI region identifier for the CLI (e.g. us-ashburn-1)
-#   OKE_CLUSTER_OCID     - OCID of the target OKE cluster
-# No OCIR secrets are needed anymore; GHCR auth uses the built-in GITHUB_TOKEN.
+# Reusable CD for ghorha referral Java services.
+# Builds the service repo (not referral-infra), pushes linux/arm64 to GHCR, helms to Phoenix OKE.
 name: service-cd
 
 on:
   workflow_call:
     inputs:
       service:
-        description: Service name, also the image repo and values file stem (e.g. referral-auth-service)
+        description: Service repo / image name (e.g. referral-auth-service)
         required: true
         type: string
       port:
-        description: Container / service port for the service
+        description: Container / service port
         required: true
         type: number
 
@@ -53,20 +24,27 @@ jobs:
     steps:
       - name: Checkout service repo
         uses: actions/checkout@v4
+        with:
+          repository: ghorha/${{ inputs.service }}
+          ref: main
+          token: ${{ secrets.GH_PAT }}
 
-      - name: Set up JDK 21
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "21"
+          java-version: "17"
 
-      - name: Set up Gradle 8.10
+      - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "8.10"
 
       - name: Build and test
-        run: gradle test bootJar --no-daemon
+        run: |
+          if [ -x ./gradlew ]; then
+            ./gradlew test bootJar --no-daemon
+          else
+            gradle test bootJar --no-daemon
+          fi
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -75,15 +53,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Build and push image (linux/arm64)
-        # NOTE: the runner is amd64, so arm64 is cross-built through QEMU
-        # emulation here, which is noticeably slower than a native build.
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -93,6 +66,15 @@ jobs:
             ghcr.io/ghorha/${{ inputs.service }}:${{ github.sha }}
             ghcr.io/ghorha/${{ inputs.service }}:latest
 
+      - name: Make GHCR package public (first-time pull from cluster)
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+        run: |
+          # Ignore failures if already public / API shape differs
+          gh api --method PATCH \
+            "/orgs/ghorha/packages/container/${{ inputs.service }}/visibility" \
+            -f visibility=public || true
+
       - name: Install and configure OCI CLI
         env:
           OCI_CLI_USER: ${{ secrets.OCI_CLI_USER }}
@@ -101,9 +83,11 @@ jobs:
           OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_CLI_KEY_CONTENT }}
           OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
         run: |
-          curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh \
-            | bash -s -- --accept-all-defaults
-          echo "${HOME}/bin" >> "$GITHUB_PATH"
+          if ! command -v oci >/dev/null 2>&1; then
+            curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh \
+              | bash -s -- --accept-all-defaults
+            echo "${HOME}/bin" >> "$GITHUB_PATH"
+          fi
           mkdir -p "${HOME}/.oci"
           printf '%s\n' "$OCI_CLI_KEY_CONTENT" > "${HOME}/.oci/oci_api_key.pem"
           chmod 600 "${HOME}/.oci/oci_api_key.pem"
@@ -136,6 +120,7 @@ jobs:
           repository: ghorha/referral-infra
           ref: main
           path: infra
+          token: ${{ secrets.GH_PAT }}
 
       - name: Set up Helm
         uses: azure/setup-helm@v4
@@ -152,4 +137,4 @@ jobs:
             --set image.registry=ghcr.io/ghorha \
             --set image.tag="${SHA}" \
             --set port="${PORT}" \
-            --wait --timeout 5m
+            --wait --timeout 10m

@@ -8,8 +8,25 @@ pdb:
   enabled: false
 env:
   SPRING_PROFILES_ACTIVE: "prod"
-  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "3"
   SERVER_PORT: "8080"
+  AUTH_SERVICE_URL: "http://referral-auth-service:8081"
+  USER_SERVICE_URL: "http://referral-user-service:8085"
+  LISTING_SERVICE_URL: "http://referral-listing-service:8082"
+  CLAIM_SERVICE_URL: "http://referral-claim-service:8083"
+  PAYMENT_SERVICE_URL: "http://referral-payment-service:8084"
+  ADMIN_SERVICE_URL: "http://referral-admin-service:8086"
+  NOTIFICATION_SERVICE_URL: "http://referral-notification-service:8087"
+  SUPPORT_SERVICE_URL: "http://referral-support-service:8088"
+  ANALYTICS_SERVICE_URL: "http://referral-analytics-service:8089"
+  AUDIT_SERVICE_URL: "http://referral-audit-service:8090"
+  ORCHESTRATION_SERVICE_URL: "http://referral-orchestration-service:8091"
 envFrom:
   - referral-redis
   - referral-jwt
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

@@ -8,6 +8,7 @@ jobs:
   rollout:
     strategy:
       fail-fast: false
+      max-parallel: 2
       matrix:
         include:
           - { service: referral-api-gateway, port: 8080 }
@@ -27,3 +28,4 @@ jobs:
       service: ${{ matrix.service }}
       port: ${{ matrix.port }}
     secrets: inherit
+
