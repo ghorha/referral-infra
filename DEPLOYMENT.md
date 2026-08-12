@@ -53,3 +53,9 @@ gh workflow run deploy-all.yml --repo ghorha/referral-infra
 ## Runner
 
 Jobs target `runs-on: [self-hosted, macOS, ARM64]` (ARM images for the OKE node pool). The runner needs Docker, JDK 17, Helm, and OCI CLI.
+
+## Troubleshooting
+
+- **`Input required and not supplied: token`**: `GH_PAT` must be set as an org secret (and preferably mirrored on `referral-infra`). Service CD maps it into the reusable workflow.
+- **Helm SSA conflicts** (`conflicts with kubectl-client-side-apply`): `service-cd` uses `--force-conflicts`.
+- **CI using wrong Gradle**: workflows must call `./gradlew` only (never fall back to system `gradle` 9.x).

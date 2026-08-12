@@ -1,5 +1,5 @@
 # Reusable CD for ghorha referral Java services.
-# Builds the service repo (not referral-infra), pushes linux/arm64 to GHCR, helms to Phoenix OKE.
+# Builds the caller service repo, pushes linux/arm64 to GHCR, helms to Phoenix OKE.
 #
 # Callers in OTHER repos must pass secrets: explicitly (secrets: inherit does not
 # work across repositories). See DEPLOYMENT.md.
@@ -40,12 +40,11 @@ jobs:
   build-and-deploy:
     runs-on: [self-hosted, macOS, ARM64]
     steps:
+      # Caller workflow context: default checkout uses GITHUB_TOKEN for the service repo.
       - name: Checkout service repo
         uses: actions/checkout@v4
         with:
-          repository: ghorha/${{ inputs.service }}
-          ref: main
-          token: ${{ secrets.GH_PAT }}
+          ref: ${{ github.sha }}
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -58,9 +57,6 @@ jobs:
 
       - name: Build bootJar
         run: |
-          # CD deploys artifacts; several service test suites are currently stale
-          # (Mockito strict stubbing / WIP entity renames). Keep unit tests in
-          # per-repo CI; do not block image publish on them here.
           if [ -x ./gradlew ]; then
             ./gradlew bootJar --no-daemon -x test
           else
@@ -71,7 +67,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: abhaysingh197
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.GH_PAT }}
 
       - name: Set up Docker Buildx
@@ -97,17 +93,17 @@ jobs:
           OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
         run: |
           set -euo pipefail
-          # Shared self-hosted Mac also runs piraho CD. Never reinstall into
-          # ~/lib/oracle-cli and never overwrite ~/.oci/config (DEFAULT=piraho).
           echo "${HOME}/bin" >> "$GITHUB_PATH"
           export PATH="${HOME}/bin:${PATH}"
           if ! command -v oci >/dev/null 2>&1; then
-            echo "::error::OCI CLI missing on runner. Preinstall once: https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm"
+            echo "::error::OCI CLI missing on runner."
             exit 1
           fi
 
           CFG_DIR="${RUNNER_TEMP}/oci-ghorha"
+          KUBECONFIG_PATH="${RUNNER_TEMP}/kubeconfig-ghorha"
           mkdir -p "$CFG_DIR"
+
           if grep -q '^\[GHORHA\]' "${HOME}/.oci/config" 2>/dev/null; then
             export OCI_CLI_PROFILE=GHORHA
             unset OCI_CLI_CONFIG_FILE || true
@@ -133,13 +129,13 @@ jobs:
           fi
 
           test -n "${OKE_CLUSTER_OCID}"
-          mkdir -p "${HOME}/.kube"
           oci ce cluster create-kubeconfig \
             --cluster-id "$OKE_CLUSTER_OCID" \
             --region "${OCI_CLI_REGION:-us-phoenix-1}" \
-            --file "${HOME}/.kube/config" \
+            --file "${KUBECONFIG_PATH}" \
             --token-version 2.0.0 \
             --kube-endpoint PUBLIC_ENDPOINT
+          echo "KUBECONFIG=${KUBECONFIG_PATH}" >> "$GITHUB_ENV"
 
       - name: Checkout referral-infra (Helm chart + values)
         uses: actions/checkout@v4
@@ -158,7 +154,8 @@ jobs:
           PORT: ${{ inputs.port }}
           SHA: ${{ github.sha }}
         run: |
-          # Cluster uses private GHCR + imagePullSecret ghcr-pull (see bootstrap).
+          set -euo pipefail
+          # --force-conflicts: adopt fields previously owned by kubectl client-side apply
           helm upgrade --install "${SERVICE}" ./infra/deploy/chart \
             -n referral --create-namespace \
             -f "./infra/deploy/values/${SERVICE}.yaml" \
@@ -166,4 +163,5 @@ jobs:
             --set image.tag="${SHA}" \
             --set port="${PORT}" \
             --set 'imagePullSecrets[0].name=ghcr-pull' \
+            --force-conflicts \
             --wait --timeout 10m

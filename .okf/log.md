@@ -62,3 +62,5 @@ External‑credential blockers (Stripe, Mailgun, Google OAuth, Google Vision OCR
 - 2026-08-12: SECURITY — Secrets manifests renamed to *.example.yaml; staging NetworkPolicy; API CIDR default not 0.0.0.0/0.
 
 - 2026-08-12: CI/CD — Document GitHub → GHCR → OCI OKE path; note that cross-repo `service-cd` callers must map secrets explicitly (not `secrets: inherit`).
+- 2026-08-12: CI/CD harden — default checkout for caller, GHCR via PAT, helm --force-conflicts, per-job kubeconfig, deploy-service.yml.
+- 2026-08-12b: CI/CD — green unit tests / workflows; CD secrets + helm conflict handling.
