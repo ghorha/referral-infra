@@ -94,36 +94,49 @@ jobs:
           OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
         run: |
           set -euo pipefail
+          # Shared self-hosted Mac also runs piraho CD. Never reinstall into
+          # ~/lib/oracle-cli and never overwrite ~/.oci/config (DEFAULT=piraho).
+          echo "${HOME}/bin" >> "$GITHUB_PATH"
+          export PATH="${HOME}/bin:${PATH}"
           if ! command -v oci >/dev/null 2>&1; then
-            curl -L https://raw.githubusercontent.com/oracle/oci-cli/master/scripts/install/install.sh               | bash -s -- --accept-all-defaults
-            echo "${HOME}/bin" >> "$GITHUB_PATH"
+            echo "::error::OCI CLI missing on runner. Preinstall once: https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm"
+            exit 1
           fi
-          # Prefer already-configured GHORHA profile on the self-hosted Mac runner.
+
+          CFG_DIR="${RUNNER_TEMP}/oci-ghorha"
+          mkdir -p "$CFG_DIR"
           if grep -q '^\[GHORHA\]' "${HOME}/.oci/config" 2>/dev/null; then
             export OCI_CLI_PROFILE=GHORHA
+            unset OCI_CLI_CONFIG_FILE || true
           else
             test -n "${OCI_CLI_USER}"
             test -n "${OCI_CLI_TENANCY}"
             test -n "${OCI_CLI_FINGERPRINT}"
             test -n "${OCI_CLI_KEY_CONTENT}"
             test -n "${OCI_CLI_REGION}"
-            mkdir -p "${HOME}/.oci"
-            printf '%s\n' "$OCI_CLI_KEY_CONTENT" > "${HOME}/.oci/oci_api_key.pem"
-            printf 'OCI_API_KEY\n' >> "${HOME}/.oci/oci_api_key.pem"
-            chmod 600 "${HOME}/.oci/oci_api_key.pem"
+            printf '%s\n' "$OCI_CLI_KEY_CONTENT" > "${CFG_DIR}/oci_api_key.pem"
+            printf 'OCI_API_KEY\n' >> "${CFG_DIR}/oci_api_key.pem"
+            chmod 600 "${CFG_DIR}/oci_api_key.pem"
             {
               echo "[DEFAULT]"
               echo "user=${OCI_CLI_USER}"
               echo "fingerprint=${OCI_CLI_FINGERPRINT}"
               echo "tenancy=${OCI_CLI_TENANCY}"
               echo "region=${OCI_CLI_REGION}"
-              echo "key_file=${HOME}/.oci/oci_api_key.pem"
-            } > "${HOME}/.oci/config"
-            chmod 600 "${HOME}/.oci/config"
+              echo "key_file=${CFG_DIR}/oci_api_key.pem"
+            } > "${CFG_DIR}/config"
+            chmod 600 "${CFG_DIR}/config"
+            export OCI_CLI_CONFIG_FILE="${CFG_DIR}/config"
           fi
+
           test -n "${OKE_CLUSTER_OCID}"
           mkdir -p "${HOME}/.kube"
-          oci ce cluster create-kubeconfig             --cluster-id "$OKE_CLUSTER_OCID"             --region "${OCI_CLI_REGION:-us-phoenix-1}"             --file "${HOME}/.kube/config"             --token-version 2.0.0             --kube-endpoint PUBLIC_ENDPOINT
+          oci ce cluster create-kubeconfig \
+            --cluster-id "$OKE_CLUSTER_OCID" \
+            --region "${OCI_CLI_REGION:-us-phoenix-1}" \
+            --file "${HOME}/.kube/config" \
+            --token-version 2.0.0 \
+            --kube-endpoint PUBLIC_ENDPOINT
 
       - name: Checkout referral-infra (Helm chart + values)
         uses: actions/checkout@v4
