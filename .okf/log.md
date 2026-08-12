@@ -67,3 +67,4 @@ External‑credential blockers (Stripe, Mailgun, Google OAuth, Google Vision OCR
 - 2026-08-12: CD — ensure Homebrew `/opt/homebrew/bin` is on PATH so `oci` is found on self-hosted macOS runners.
 - 2026-08-12b: CI/CD — green unit tests / workflows; CD secrets + helm conflict handling.
 - 2026-08-12: CD — services dispatch deploy-service.yml on infra so OCI secrets resolve from referral-infra.
+- 2026-08-12: CD — validate service ref is main or sha before checkout.

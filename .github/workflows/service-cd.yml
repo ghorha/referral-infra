@@ -44,6 +44,17 @@ jobs:
   build-and-deploy:
     runs-on: [self-hosted, macOS, ARM64]
     steps:
+      - name: Validate ref
+        env:
+          REF: ${{ inputs.ref }}
+        run: |
+          set -euo pipefail
+          # Guard against polluted dispatcher input (e.g. shell chpwd "ls" noise).
+          if [[ ! "$REF" =~ ^(main|[0-9a-f]{7,40})$ ]]; then
+            echo "::error::Invalid service ref '$REF' (expected main or git sha)"
+            exit 1
+          fi
+
       - name: Checkout service repo
         uses: actions/checkout@v4
         with:
