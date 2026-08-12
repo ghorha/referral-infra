@@ -71,3 +71,4 @@ External‑credential blockers (Stripe, Mailgun, Google OAuth, Google Vision OCR
 - 2026-08-12: CD — pass KUBECONFIG/OCI_CLI_CONFIG_FILE/PATH to helm step for OKE exec auth.
 - 2026-08-12: CD — isolate DOCKER_CONFIG per job; no docker logout (fixes parallel GHCR 403).
 - 2026-08-12: CD — DOCKER_CONFIG keyed by service+run_id+attempt for matrix safety.
+- 2026-08-12: Add fleet-status dashboard (branch drift + undeployed main vs OKE).

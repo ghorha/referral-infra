@@ -1,0 +1,394 @@
+{
+  "generated_at": "2026-08-12T15:22:00Z",
+  "source": "local:/Users/abhaysingh/Documents/development/referral/services",
+  "deploy_source": "oke",
+  "summary": {
+    "repos": 17,
+    "repos_with_unmerged": 7,
+    "repos_with_behind": 7,
+    "repos_undeployed": 0
+  },
+  "repos": [
+    {
+      "repo": "referral-admin-service",
+      "main_sha": "dd418b758f080bdea5b20f200accd5948280bc3f",
+      "default_branch": "main",
+      "branches_ahead": [
+        {
+          "name": "fix/restore-ci-drop-bin-202608120124",
+          "ahead_of_main": 1,
+          "behind_main": 7,
+          "url": "https://github.com/ghorha/referral-admin-service/tree/fix/restore-ci-drop-bin-202608120124"
+        },
+        {
+          "name": "sync/monorepo-20260812",
+          "ahead_of_main": 1,
+          "behind_main": 8,
+          "url": "https://github.com/ghorha/referral-admin-service/tree/sync/monorepo-20260812"
+        }
+      ],
+      "branches_behind": [
+        {
+          "name": "fix/restore-ci-drop-bin-202608120124",
+          "ahead_of_main": 1,
+          "behind_main": 7,
+          "url": "https://github.com/ghorha/referral-admin-service/tree/fix/restore-ci-drop-bin-202608120124"
+        },
+        {
+          "name": "sync/monorepo-20260812",
+          "ahead_of_main": 1,
+          "behind_main": 8,
+          "url": "https://github.com/ghorha/referral-admin-service/tree/sync/monorepo-20260812"
+        }
+      ],
+      "deployed_sha": "dd418b758f080bdea5b20f200accd5948280bc3f",
+      "deploy_source": "oke",
+      "undeployed": false,
+      "undeployed_commits": 0,
+      "notes": [],
+      "html_url": "https://github.com/ghorha/referral-admin-service"
+    },
+    {
+      "repo": "referral-agents",
+      "main_sha": "a244f76de89c39734bf00a7f5f30196d7d50ccbe",
+      "default_branch": "main",
+      "branches_ahead": [],
+      "branches_behind": [],
+      "deployed_sha": "",
+      "deploy_source": "",
+      "undeployed": false,
+      "undeployed_commits": 0,
+      "notes": [],
+      "html_url": "https://github.com/ghorha/referral-agents"
+    },
+    {
+      "repo": "referral-analytics-service",
+      "main_sha": "93a2fc86e7a701dca02cf7ddaf97f3a242557b26",
+      "default_branch": "main",
+      "branches_ahead": [],
+      "branches_behind": [],
+      "deployed_sha": "93a2fc86e7a701dca02cf7ddaf97f3a242557b26",
+      "deploy_source": "oke",
+      "undeployed": false,
+      "undeployed_commits": 0,
+      "notes": [],
+      "html_url": "https://github.com/ghorha/referral-analytics-service"
+    },
+    {
+      "repo": "referral-api-gateway",
+      "main_sha": "9bafb9f96c89bb2b00dd2f2223ec5463ce66b1d0",
+      "default_branch": "main",
+      "branches_ahead": [
+        {
+          "name": "fix/restore-ci-drop-bin-202608120124",
+          "ahead_of_main": 1,
+          "behind_main": 7,
+          "url": "https://github.com/ghorha/referral-api-gateway/tree/fix/restore-ci-drop-bin-202608120124"
+        },
+        {
+          "name": "sync/monorepo-20260812",
+          "ahead_of_main": 1,
+          "behind_main": 8,
+          "url": "https://github.com/ghorha/referral-api-gateway/tree/sync/monorepo-20260812"
+        }
+      ],
+      "branches_behind": [
+        {
+          "name": "fix/restore-ci-drop-bin-202608120124",
+          "ahead_of_main": 1,
+          "behind_main": 7,
+          "url": "https://github.com/ghorha/referral-api-gateway/tree/fix/restore-ci-drop-bin-202608120124"
+        },
+        {
+          "name": "sync/monorepo-20260812",
+          "ahead_of_main": 1,
+          "behind_main": 8,
+          "url": "https://github.com/ghorha/referral-api-gateway/tree/sync/monorepo-20260812"
+        }
+      ],
+      "deployed_sha": "9bafb9f96c89bb2b00dd2f2223ec5463ce66b1d0",
+      "deploy_source": "oke",
+      "undeployed": false,
+      "undeployed_commits": 0,
+      "notes": [],
+      "html_url": "https://github.com/ghorha/referral-api-gateway"
+    },
+    {
+      "repo": "referral-audit-service",
+      "main_sha": "a61b1551f1ac001df893068dababa01e6e632aa6",
+      "default_branch": "main",
+      "branches_ahead": [],
+      "branches_behind": [],
+      "deployed_sha": "a61b1551f1ac001df893068dababa01e6e632aa6",
+      "deploy_source": "oke",
+      "undeployed": false,
+      "undeployed_commits": 0,
+      "notes": [],
+      "html_url": "https://github.com/ghorha/referral-audit-service"
+    },
+    {
+      "repo": "referral-auth-service",
+      "main_sha": "139e9978ed97c58825d7bf1d51f500863839be9d",
+      "default_branch": "main",
+      "branches_ahead": [],
+      "branches_behind": [],
+      "deployed_sha": "139e9978ed97c58825d7bf1d51f500863839be9d",
+      "deploy_source": "oke",
+      "undeployed": false,
+      "undeployed_commits": 0,
+      "notes": [],
+      "html_url": "https://github.com/ghorha/referral-auth-service"
+    },
+    {
+      "repo": "referral-claim-service",
+      "main_sha": "362ce1cd5d0359ed5ac52244f12c0fea1229272d",
+      "default_branch": "main",
+      "branches_ahead": [
+        {
+          "name": "fix/restore-ci-drop-bin-202608120124",
+          "ahead_of_main": 1,
+          "behind_main": 7,
+          "url": "https://github.com/ghorha/referral-claim-service/tree/fix/restore-ci-drop-bin-202608120124"
+        },
+        {
+          "name": "sync/monorepo-20260812",
+          "ahead_of_main": 1,
+          "behind_main": 8,
+          "url": "https://github.com/ghorha/referral-claim-service/tree/sync/monorepo-20260812"
+        }
+      ],
+      "branches_behind": [
+        {
+          "name": "fix/restore-ci-drop-bin-202608120124",
+          "ahead_of_main": 1,
+          "behind_main": 7,
+          "url": "https://github.com/ghorha/referral-claim-service/tree/fix/restore-ci-drop-bin-202608120124"
+        },
+        {
+          "name": "sync/monorepo-20260812",
+          "ahead_of_main": 1,
+          "behind_main": 8,
+          "url": "https://github.com/ghorha/referral-claim-service/tree/sync/monorepo-20260812"
+        }
+      ],
+      "deployed_sha": "362ce1cd5d0359ed5ac52244f12c0fea1229272d",
+      "deploy_source": "oke",
+      "undeployed": false,
+      "undeployed_commits": 0,
+      "notes": [],
+      "html_url": "https://github.com/ghorha/referral-claim-service"
+    },
+    {
+      "repo": "referral-frontend",
+      "main_sha": "ce117d6075e4880a130a6a36ec1172b42394403e",
+      "default_branch": "main",
+      "branches_ahead": [
+        {
+          "name": "sync/monorepo-frontend-20260812",
+          "ahead_of_main": 1,
+          "behind_main": 7,
+          "url": "https://github.com/ghorha/referral-frontend/tree/sync/monorepo-frontend-20260812"
+        }
+      ],
+      "branches_behind": [
+        {
+          "name": "sync/monorepo-frontend-20260812",
+          "ahead_of_main": 1,
+          "behind_main": 7,
+          "url": "https://github.com/ghorha/referral-frontend/tree/sync/monorepo-frontend-20260812"
+        }
+      ],
+      "deployed_sha": "",
+      "deploy_source": "unknown",
+      "undeployed": false,
+      "undeployed_commits": 0,
+      "notes": [
+        "frontend deploy check needs GH_PAT"
+      ],
+      "html_url": "https://github.com/ghorha/referral-frontend"
+    },
+    {
+      "repo": "referral-infra",
+      "main_sha": "3ddc3f95a217ab71e8109eddb7bf5391026de02b",
+      "default_branch": "main",
+      "branches_ahead": [
+        {
+          "name": "sync/monorepo-infra-20260812",
+          "ahead_of_main": 1,
+          "behind_main": 13,
+          "url": "https://github.com/ghorha/referral-infra/tree/sync/monorepo-infra-20260812"
+        }
+      ],
+      "branches_behind": [
+        {
+          "name": "sync/monorepo-infra-20260812",
+          "ahead_of_main": 1,
+          "behind_main": 13,
+          "url": "https://github.com/ghorha/referral-infra/tree/sync/monorepo-infra-20260812"
+        }
+      ],
+      "deployed_sha": "",
+      "deploy_source": "",
+      "undeployed": false,
+      "undeployed_commits": 0,
+      "notes": [],
+      "html_url": "https://github.com/ghorha/referral-infra"
+    },
+    {
+      "repo": "referral-listing-service",
+      "main_sha": "381858c0b02dc2bec29e634432211d5bf9a132fd",
+      "default_branch": "main",
+      "branches_ahead": [
+        {
+          "name": "fix/restore-ci-drop-bin-202608120124",
+          "ahead_of_main": 1,
+          "behind_main": 7,
+          "url": "https://github.com/ghorha/referral-listing-service/tree/fix/restore-ci-drop-bin-202608120124"
+        },
+        {
+          "name": "sync/monorepo-20260812",
+          "ahead_of_main": 1,
+          "behind_main": 8,
+          "url": "https://github.com/ghorha/referral-listing-service/tree/sync/monorepo-20260812"
+        }
+      ],
+      "branches_behind": [
+        {
+          "name": "fix/restore-ci-drop-bin-202608120124",
+          "ahead_of_main": 1,
+          "behind_main": 7,
+          "url": "https://github.com/ghorha/referral-listing-service/tree/fix/restore-ci-drop-bin-202608120124"
+        },
+        {
+          "name": "sync/monorepo-20260812",
+          "ahead_of_main": 1,
+          "behind_main": 8,
+          "url": "https://github.com/ghorha/referral-listing-service/tree/sync/monorepo-20260812"
+        }
+      ],
+      "deployed_sha": "381858c0b02dc2bec29e634432211d5bf9a132fd",
+      "deploy_source": "oke",
+      "undeployed": false,
+      "undeployed_commits": 0,
+      "notes": [],
+      "html_url": "https://github.com/ghorha/referral-listing-service"
+    },
+    {
+      "repo": "referral-notification-service",
+      "main_sha": "96d983b5f7f810574e3bc4ef31349c0bbb345d21",
+      "default_branch": "main",
+      "branches_ahead": [],
+      "branches_behind": [],
+      "deployed_sha": "96d983b5f7f810574e3bc4ef31349c0bbb345d21",
+      "deploy_source": "oke",
+      "undeployed": false,
+      "undeployed_commits": 0,
+      "notes": [],
+      "html_url": "https://github.com/ghorha/referral-notification-service"
+    },
+    {
+      "repo": "referral-orchestration-service",
+      "main_sha": "53d6a6e3472f8627b31feb68cfa62d576d3de43a",
+      "default_branch": "main",
+      "branches_ahead": [],
+      "branches_behind": [],
+      "deployed_sha": "53d6a6e3472f8627b31feb68cfa62d576d3de43a",
+      "deploy_source": "oke",
+      "undeployed": false,
+      "undeployed_commits": 0,
+      "notes": [],
+      "html_url": "https://github.com/ghorha/referral-orchestration-service"
+    },
+    {
+      "repo": "referral-payment-service",
+      "main_sha": "bab996b021403d014ff96e8f844c24295f4bb00d",
+      "default_branch": "main",
+      "branches_ahead": [],
+      "branches_behind": [],
+      "deployed_sha": "bab996b021403d014ff96e8f844c24295f4bb00d",
+      "deploy_source": "oke",
+      "undeployed": false,
+      "undeployed_commits": 0,
+      "notes": [],
+      "html_url": "https://github.com/ghorha/referral-payment-service"
+    },
+    {
+      "repo": "referral-product",
+      "main_sha": "181e7784cce97c802e16c9da8dc1d28bb5a0cdef",
+      "default_branch": "main",
+      "branches_ahead": [],
+      "branches_behind": [],
+      "deployed_sha": "",
+      "deploy_source": "",
+      "undeployed": false,
+      "undeployed_commits": 0,
+      "notes": [],
+      "html_url": "https://github.com/ghorha/referral-product"
+    },
+    {
+      "repo": "referral-support-service",
+      "main_sha": "5a1a1412a35766a72b395339b1404f712a1f357e",
+      "default_branch": "main",
+      "branches_ahead": [
+        {
+          "name": "fix/restore-ci-drop-bin-202608120124",
+          "ahead_of_main": 1,
+          "behind_main": 6,
+          "url": "https://github.com/ghorha/referral-support-service/tree/fix/restore-ci-drop-bin-202608120124"
+        },
+        {
+          "name": "sync/monorepo-20260812",
+          "ahead_of_main": 1,
+          "behind_main": 7,
+          "url": "https://github.com/ghorha/referral-support-service/tree/sync/monorepo-20260812"
+        }
+      ],
+      "branches_behind": [
+        {
+          "name": "fix/restore-ci-drop-bin-202608120124",
+          "ahead_of_main": 1,
+          "behind_main": 6,
+          "url": "https://github.com/ghorha/referral-support-service/tree/fix/restore-ci-drop-bin-202608120124"
+        },
+        {
+          "name": "sync/monorepo-20260812",
+          "ahead_of_main": 1,
+          "behind_main": 7,
+          "url": "https://github.com/ghorha/referral-support-service/tree/sync/monorepo-20260812"
+        }
+      ],
+      "deployed_sha": "5a1a1412a35766a72b395339b1404f712a1f357e",
+      "deploy_source": "oke",
+      "undeployed": false,
+      "undeployed_commits": 0,
+      "notes": [],
+      "html_url": "https://github.com/ghorha/referral-support-service"
+    },
+    {
+      "repo": "referral-tests",
+      "main_sha": "4ac0040e559b548fabd68db86767d3cc8f8a7fa1",
+      "default_branch": "main",
+      "branches_ahead": [],
+      "branches_behind": [],
+      "deployed_sha": "",
+      "deploy_source": "",
+      "undeployed": false,
+      "undeployed_commits": 0,
+      "notes": [],
+      "html_url": "https://github.com/ghorha/referral-tests"
+    },
+    {
+      "repo": "referral-user-service",
+      "main_sha": "4decdc7aa26ee23a71e7f8799ab04ba78f5b5ece",
+      "default_branch": "main",
+      "branches_ahead": [],
+      "branches_behind": [],
+      "deployed_sha": "4decdc7aa26ee23a71e7f8799ab04ba78f5b5ece",
+      "deploy_source": "oke",
+      "undeployed": false,
+      "undeployed_commits": 0,
+      "notes": [],
+      "html_url": "https://github.com/ghorha/referral-user-service"
+    }
+  ]
+}

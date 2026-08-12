@@ -39,3 +39,11 @@ Cross-repo reusable workflows **cannot** use `secrets: inherit`. Callers must ma
 ## Self-hosted runner caveats
 - Isolate `DOCKER_CONFIG` per deploy job; never logout on shared Docker daemon (parallel GHCR 403).
 - Persist `KUBECONFIG`, `OCI_CLI_CONFIG_FILE`, and Homebrew PATH for OKE exec auth in Helm.
+
+## Fleet status dashboard
+
+`scripts/fleet-status/generate.py` + `.github/workflows/fleet-status.yml` publish `docs/fleet-status/`:
+
+- Unmerged commits on non-`main` branches
+- Branches behind `main`
+- `main` vs production (OKE image tags; frontend last successful `deploy.yml`)

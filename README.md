@@ -20,6 +20,20 @@ See DEPLOYMENT.md and deploy/
 - Full matrix rollout: `.github/workflows/deploy-all.yml` (workflow_dispatch).
 - Details and required org secrets: **`DEPLOYMENT.md`**.
 
+## Fleet status dashboard
+
+Live snapshot of branch drift and undeployed `main` commits:
+
+- **Browse:** [`docs/fleet-status/index.html`](./docs/fleet-status/index.html) (also `fleet-status.md`)
+- **Refresh locally:**
+  ```bash
+  python3 scripts/fleet-status/generate.py \
+    --local-root ../ \
+    --oci-profile GHORHA \
+    --oci-cluster "$OKE_CLUSTER_OCID"
+  ```
+- **CI:** `.github/workflows/fleet-status.yml` (daily + `workflow_dispatch`) writes the snapshot via GitHub API + OKE.
+
 ## Test
 ```bash
 terraform validate (where applicable)

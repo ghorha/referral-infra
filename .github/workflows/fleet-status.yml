@@ -1,0 +1,96 @@
+name: fleet-status
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "0 13 * * *"
+  push:
+    paths:
+      - "scripts/fleet-status/**"
+      - ".github/workflows/fleet-status.yml"
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: fleet-status
+  cancel-in-progress: true
+
+jobs:
+  report:
+    runs-on: [self-hosted, macOS, ARM64]
+    steps:
+      - name: Checkout referral-infra
+        uses: actions/checkout@v4
+
+      - name: Configure PATH
+        run: |
+          for d in "${HOME}/bin" /opt/homebrew/bin /usr/local/bin; do
+            echo "$d" >> "$GITHUB_PATH"
+          done
+
+      - name: Generate fleet status
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          OKE_CLUSTER_OCID: ${{ secrets.OKE_CLUSTER_OCID }}
+          OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
+          OCI_CLI_USER: ${{ secrets.OCI_CLI_USER }}
+          OCI_CLI_TENANCY: ${{ secrets.OCI_CLI_TENANCY }}
+          OCI_CLI_FINGERPRINT: ${{ secrets.OCI_CLI_FINGERPRINT }}
+          OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_CLI_KEY_CONTENT }}
+        run: |
+          set -euo pipefail
+          export PATH="${HOME}/bin:/opt/homebrew/bin:/usr/local/bin:${PATH}"
+
+          CFG_DIR="${RUNNER_TEMP}/oci-fleet"
+          mkdir -p "$CFG_DIR"
+          KEY="${CFG_DIR}/key.pem"
+          printf '%s\n' "${OCI_CLI_KEY_CONTENT}" > "$KEY"
+          chmod 600 "$KEY"
+          {
+            echo "[DEFAULT]"
+            echo "user=${OCI_CLI_USER}"
+            echo "fingerprint=${OCI_CLI_FINGERPRINT}"
+            echo "tenancy=${OCI_CLI_TENANCY}"
+            echo "region=${OCI_CLI_REGION:-us-phoenix-1}"
+            echo "key_file=${KEY}"
+          } > "${CFG_DIR}/config"
+          export OCI_CLI_CONFIG_FILE="${CFG_DIR}/config"
+
+          python3 scripts/fleet-status/generate.py \
+            --github \
+            --oci-profile DEFAULT \
+            --oci-cluster "${OKE_CLUSTER_OCID}" \
+            --oci-region "${OCI_CLI_REGION:-us-phoenix-1}" \
+            --out-dir docs/fleet-status
+
+      - name: Job summary
+        run: |
+          {
+            echo "## Fleet status"
+            echo
+            cat docs/fleet-status/fleet-status.md
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload HTML artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fleet-status
+          path: docs/fleet-status/
+
+      - name: Commit status snapshot to main
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          set -euo pipefail
+          git config user.name "vouch-fleet-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/fleet-status/
+          if git diff --cached --quiet; then
+            echo "No fleet-status changes"
+            exit 0
+          fi
+          git commit -m "chore: refresh fleet-status dashboard"
+          git push "https://x-access-token:${GH_PAT}@github.com/ghorha/referral-infra.git" HEAD:main

@@ -53,6 +53,29 @@ From `referral-infra`:
 gh workflow run deploy-all.yml --repo ghorha/referral-infra
 ```
 
+## Fleet status dashboard
+
+`scripts/fleet-status/generate.py` answers:
+
+1. Which non-`main` branches still have commits not merged to `main`
+2. Which branches are behind `main` (stale / need rebase)
+3. Whether `main` has commits not yet running in production (OKE image tag vs `main` SHA; frontend via last successful `deploy.yml`)
+
+Outputs land in `docs/fleet-status/` (`index.html`, `.md`, `.json`).
+
+```bash
+# Local clones + live OKE (OCI profile must reach Phoenix cluster)
+python3 scripts/fleet-status/generate.py \
+  --local-root /path/to/services \
+  --oci-profile GHORHA \
+  --oci-cluster "$OKE_CLUSTER_OCID"
+
+# Or fully remote (needs GH_PAT)
+GH_PAT=... python3 scripts/fleet-status/generate.py --github --oci-profile GHORHA --oci-cluster "$OKE_CLUSTER_OCID"
+```
+
+Scheduled refresh: `gh workflow run fleet-status.yml --repo ghorha/referral-infra`
+
 ## Runner
 
 Jobs target `runs-on: [self-hosted, macOS, ARM64]` (ARM images for the OKE node pool). The runner needs Docker, JDK 17, Helm, and OCI CLI.
