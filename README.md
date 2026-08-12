@@ -43,3 +43,6 @@ Repo-local guidance lives in **`.okf/`** (`index.md` + `concepts/`). Read that b
 
 Any change in this repo must update **README.md** (for humans) and **`.okf/`** (for AI agents) in the same change set.
 
+## Security notes
+
+Secrets manifests renamed to *.example.yaml; staging NetworkPolicy; API CIDR default not 0.0.0.0/0.

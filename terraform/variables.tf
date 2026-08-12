@@ -167,7 +167,7 @@ variable "services_cidr" {
 variable "api_endpoint_allowed_cidr" {
   description = "CIDR allowed to reach the public Kubernetes API endpoint (6443). Restrict to your office/VPN for production."
   type        = string
-  default     = "0.0.0.0/0"
+  default = "10.0.0.0/8"
 }
 
 # ---------------------------------------------------------------------------

@@ -58,3 +58,5 @@ External‑credential blockers (Stripe, Mailgun, Google OAuth, Google Vision OCR
 `/claims` vs `/transactions` domain product decision, and the live auth smoke test.
 
 - 2026-08-12: Added mandatory README + .okf doc-sync rule.
+
+- 2026-08-12: SECURITY — Secrets manifests renamed to *.example.yaml; staging NetworkPolicy; API CIDR default not 0.0.0.0/0.
