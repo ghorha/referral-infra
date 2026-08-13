@@ -50,7 +50,15 @@ permissions:
 
 jobs:
   build-and-deploy:
+    name: "build-and-deploy (${{ inputs.service }})"
     runs-on: [self-hosted, macOS, ARM64]
+    # Generous overall ceiling (bootJar + image build/push + Helm rollout), but
+    # bounded so a wedged Docker daemon can't silently occupy a runner for
+    # hours (this happened in practice: only 2 self-hosted runners total, and
+    # one stuck `docker build`/`docker build-push-action` step starved every
+    # other queued CI/CD job for over an hour). See the step-level timeout
+    # below for the specific step this is guarding against.
+    timeout-minutes: 30
     steps:
       - name: Validate ref
         env:
@@ -120,6 +128,11 @@ jobs:
 
       - name: Build and push image (linux/arm64)
         uses: docker/build-push-action@v6
+        # If the Docker daemon wedges, this step can otherwise hang
+        # indefinitely with no output. 15 minutes covers a real (if slow,
+        # QEMU-emulated arm64) build; past that, the daemon likely needs a
+        # restart on the runner host.
+        timeout-minutes: 15
         with:
           context: .
           platforms: linux/arm64

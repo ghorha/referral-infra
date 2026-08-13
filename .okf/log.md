@@ -89,3 +89,18 @@ External‑credential blockers (Stripe, Mailgun, Google OAuth, Google Vision OCR
   are unchanged and remain the fallback path. No changes to the OCI/Docker/
   Helm steps themselves, and nothing touching the runner outside each job's
   own scoped temp paths — this runner is shared with the `piraho` org.
+
+- 2026-08-13c: CI/CD HARDENING — `service-cd.yml`'s `Build and push image
+(linux/arm64)` step (`docker/build-push-action@v6`) hung indefinitely on
+  the shared self-hosted runner after the Java 21/Gradle 8.10 migration was
+  pushed across all 12 service repos at once — the same failure mode
+  observed independently in each service's own `ci.yml` `docker build`
+  step, confirming a wedged Docker daemon on the runner host rather than
+  anything specific to this workflow. With only 2 self-hosted runners for
+  the whole org, one stuck job starves every other queued CI/CD run for
+  hours. Added `timeout-minutes: 30` to the `build-and-deploy` job and
+  `timeout-minutes: 15` to the image build/push step specifically. Also
+  gave the job an explicit `name:` including `${{ inputs.service }}` so the
+  runner's terminal log and the Actions UI clearly show which service is
+  deploying (previously just "deploy / build-and-deploy" with no service
+  identity visible without opening the run).
