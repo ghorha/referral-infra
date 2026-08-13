@@ -72,3 +72,20 @@ External‑credential blockers (Stripe, Mailgun, Google OAuth, Google Vision OCR
 - 2026-08-12: CD — isolate DOCKER_CONFIG per job; no docker logout (fixes parallel GHCR 403).
 - 2026-08-12: CD — DOCKER_CONFIG keyed by service+run_id+attempt for matrix safety.
 - 2026-08-12: Add fleet-status dashboard (branch drift + undeployed main vs OKE).
+
+- 2026-08-13: CI/CD — bumped `service-cd.yml` from JDK 17/no-pinned-Gradle to
+  Java 21 / Gradle 8.10 (matching every service repo's own migration), and
+  removed the risky "fall back to system `gradle`" branch in the bootJar
+  step (now hard-fails with `::error::` if a service's `./gradlew` is
+  missing, per this file's own "CI using wrong Gradle" troubleshooting
+  note). Updated the header comment, `README.md`, and `DEPLOYMENT.md` to
+  reflect that service repos now call this workflow directly with
+  `secrets: inherit` instead of dispatching `deploy-service.yml` — verified
+  via `gh api orgs/ghorha/actions/secrets/<NAME>` that `GH_PAT` and every
+  `OCI_CLI_*`/`OKE_CLUSTER_OCID` secret are org-level with `visibility: all`,
+  which is what makes cross-repo `secrets: inherit` resolve correctly (the
+  two prior attempts at this exact pattern, `732d23c` and `d87e0b1`, predated
+  that and failed with empty secrets). `deploy-service.yml`/`deploy-all.yml`
+  are unchanged and remain the fallback path. No changes to the OCI/Docker/
+  Helm steps themselves, and nothing touching the runner outside each job's
+  own scoped temp paths — this runner is shared with the `piraho` org.

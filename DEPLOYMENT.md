@@ -4,17 +4,35 @@ Continuous delivery for Vouch backends:
 
 ```
 push to main (service repo)
-  → GitHub Actions ci.yml (unit tests)
+  → GitHub Actions ci.yml (unit tests, Java 21 / Gradle 8.10)
   → GitHub Actions cd.yml
-       → gh workflow run deploy-service.yml on ghorha/referral-infra
-            → reusable service-cd.yml (secrets from referral-infra)
-                 → ./gradlew bootJar
+       → uses: ghorha/referral-infra/.github/workflows/service-cd.yml@main
+         with: { service, port }
+         secrets: inherit
+            → reusable service-cd.yml
+                 → ./gradlew bootJar (Java 21 / Gradle 8.10)
                  → docker build/push linux/arm64 → ghcr.io/ghorha/<service>:<sha>
                  → oci ce cluster create-kubeconfig (Phoenix OKE)
                  → helm upgrade --install -n referral (--force-conflicts)
 ```
 
-Service repos only need `GH_PAT`. OCI secrets stay on `referral-infra`.
+Each service repo's `cd.yml` calls this repo's reusable workflow directly with
+`secrets: inherit` — viable now that `GH_PAT` and every `OCI_CLI_*`/
+`OKE_CLUSTER_OCID` secret are **organization-level secrets with
+`visibility: all`** (confirmed via `gh api orgs/ghorha/actions/secrets`), so
+they resolve for any repo in the org, including cross-repo `workflow_call`.
+
+**Fallback (manual dispatch):** `deploy-service.yml` / `deploy-all.yml` on
+this repo still work unchanged via `workflow_dispatch` and don't depend on
+cross-repo secret resolution at all (they run entirely inside this repo, with
+GH_PAT only needed by whoever/whatever triggers the dispatch). Use them if
+`secrets: inherit` ever fails to resolve secrets across a repo boundary
+again:
+
+```bash
+gh workflow run deploy-service.yml --repo ghorha/referral-infra \
+  -f service=<name> -f port=<port> -f ref=<sha-or-main>
+```
 
 Region: **us-phoenix-1**. Frontend deploys separately to **Vercel** (`referral-frontend` `deploy.yml`), not OKE.
 
@@ -22,28 +40,50 @@ Region: **us-phoenix-1**. Frontend deploys separately to **Vercel** (`referral-f
 
 Set on the `ghorha` GitHub org (visibility: all repos):
 
-| Secret | Purpose |
-|--------|---------|
-| `GH_PAT` | Checkout private repos + push to GHCR |
-| `OCI_CLI_USER` | OCI API user OCID |
-| `OCI_CLI_TENANCY` | Tenancy OCID |
-| `OCI_CLI_FINGERPRINT` | API key fingerprint |
-| `OCI_CLI_KEY_CONTENT` | PEM private key body |
-| `OCI_CLI_REGION` | `us-phoenix-1` |
-| `OKE_CLUSTER_OCID` | Target OKE cluster |
+| Secret                | Purpose                               |
+| --------------------- | ------------------------------------- |
+| `GH_PAT`              | Checkout private repos + push to GHCR |
+| `OCI_CLI_USER`        | OCI API user OCID                     |
+| `OCI_CLI_TENANCY`     | Tenancy OCID                          |
+| `OCI_CLI_FINGERPRINT` | API key fingerprint                   |
+| `OCI_CLI_KEY_CONTENT` | PEM private key body                  |
+| `OCI_CLI_REGION`      | `us-phoenix-1`                        |
+| `OKE_CLUSTER_OCID`    | Target OKE cluster                    |
 
 Frontend also needs `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`.
 
-## Important: cross-repo secrets
+## Cross-repo secrets
 
-`service-cd.yml` lives in **referral-infra**. Callers in other repos **cannot** use `secrets: inherit` (GitHub limitation for cross-repo reusable workflows). Each service `cd.yml` must map secrets explicitly:
+`service-cd.yml` lives in **referral-infra**. Callers in other repos use
+`secrets: inherit`:
 
 ```yaml
-secrets:
-  GH_PAT: ${{ secrets.GH_PAT }}
-  OCI_CLI_USER: ${{ secrets.OCI_CLI_USER }}
-  # ... same for remaining OCI_* and OKE_CLUSTER_OCID
+jobs:
+  deploy:
+    uses: ghorha/referral-infra/.github/workflows/service-cd.yml@main
+    with:
+      service: referral-<name>-service
+      port: <port>
+    secrets: inherit
 ```
+
+This relies on every secret the reusable workflow needs (`GH_PAT` and each
+`OCI_CLI_*`/`OKE_CLUSTER_OCID`) being an **organization-level secret with
+`visibility: all`**, not a repo-scoped secret on `referral-infra` alone —
+cross-repo `workflow_call` cannot resolve repo-scoped secrets from the
+called repo, only org-level ones (or secrets the caller passes explicitly).
+If a secret is ever narrowed to `referral-infra` only, `secrets: inherit`
+will silently receive empty values for it in the caller. Verify scope with:
+
+```bash
+gh api orgs/ghorha/actions/secrets/<NAME> --jq '.visibility'   # expect "all"
+```
+
+If that's ever not the case, either widen the secret's visibility, map it
+explicitly (`secrets: { NAME: ${{ secrets.NAME }} }` instead of `inherit`),
+or fall back to manual dispatch (see "Manual full rollout" below / the
+comment header in `service-cd.yml`), which doesn't depend on cross-repo
+secret resolution at all.
 
 ## Manual full rollout
 
@@ -78,11 +118,17 @@ Scheduled refresh: `gh workflow run fleet-status.yml --repo ghorha/referral-infr
 
 ## Runner
 
-Jobs target `runs-on: [self-hosted, macOS, ARM64]` (ARM images for the OKE node pool). The runner needs Docker, JDK 17, Helm, and OCI CLI.
+Jobs target `runs-on: [self-hosted, macOS, ARM64]` (ARM images for the OKE node pool). The runner needs Docker, Helm, and OCI CLI. JDK/Gradle are provisioned per-job via `actions/setup-java` + `gradle/actions/setup-gradle` (Java 21 / Gradle 8.10) — never installed globally on the runner.
 
-
+**This runner is shared with the `piraho` GitHub org's CI/CD.** Never install
+tools system-wide, never touch `~/.oci/config` or `~/lib/oracle-cli` directly
+(only read an already-preinstalled `oci` CLI), and keep all workflow state
+under `${RUNNER_TEMP}`/per-job-scoped paths (see the `DOCKER_CONFIG` and
+`oci-ghorha` config-dir handling in `service-cd.yml`) so a `ghorha` job can
+never clobber a concurrent `piraho` job's environment, and vice versa.
 
 ### Self-hosted Docker note
+
 Parallel `deploy-all` jobs share one Docker daemon. Each job uses an isolated `DOCKER_CONFIG` and does not `docker logout`, avoiding mid-push GHCR 403 races.
 
 ## Troubleshooting

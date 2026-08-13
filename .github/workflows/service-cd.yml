@@ -1,7 +1,15 @@
 # Reusable CD for ghorha referral Java services.
-# Prefer invoking via deploy-service.yml / deploy-all.yml on this repo so OCI
-# secrets resolve from referral-infra (org secrets are unreliable across
-# cross-repo workflow_call).
+#
+# Callers: each service repo's own cd.yml now calls this directly with
+# `secrets: inherit` (see e.g. referral-claim-service/.github/workflows/cd.yml).
+# This works because GH_PAT/OCI_CLI_*/OKE_CLUSTER_OCID are organization-level
+# secrets with visibility: all (verified via `gh api orgs/ghorha/actions/secrets`).
+# An earlier attempt at this same pattern failed when those secrets were more
+# narrowly scoped, which is why deploy-service.yml/deploy-all.yml (manual
+# workflow_dispatch on this repo) exist as a fallback below — use them if
+# `secrets: inherit` ever stops resolving secrets across a repo boundary again:
+#   gh workflow run deploy-service.yml --repo ghorha/referral-infra \
+#     -f service=<name> -f port=<port> -f ref=<sha-or-main>
 name: service-cd
 
 on:
@@ -69,22 +77,27 @@ jobs:
           echo "sha=${SHA}" >> "$GITHUB_OUTPUT"
           echo "Building ${{ inputs.service }} @ ${SHA}"
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.10"
 
       - name: Build bootJar
         run: |
-          if [ -x ./gradlew ]; then
-            ./gradlew bootJar --no-daemon -x test
-          else
-            gradle bootJar --no-daemon -x test
+          # Always use the service repo's own wrapper (pins Gradle/JDK per
+          # DEPLOYMENT.md's "CI using wrong Gradle" troubleshooting note) —
+          # never fall back to a system `gradle` binary.
+          if [ ! -x ./gradlew ]; then
+            echo "::error::./gradlew missing or not executable in ${{ inputs.service }} — refusing to fall back to system gradle"
+            exit 1
           fi
+          ./gradlew bootJar --no-daemon -x test
 
       # Self-hosted Mac runners share one Docker daemon across parallel jobs.
       # Isolate DOCKER_CONFIG per job and never logout, or a sibling job's

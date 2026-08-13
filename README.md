@@ -5,9 +5,11 @@
 Deploy assets: Terraform, Helm/Kubernetes manifests, Prometheus config, and cluster migrations.
 
 ## Stack
+
 Terraform, Helm/Kubernetes, Prometheus, SQL migrations
 
 ## Quick start
+
 ```bash
 # from this repo
 See DEPLOYMENT.md and deploy/
@@ -15,9 +17,9 @@ See DEPLOYMENT.md and deploy/
 
 ## CI/CD (GitHub → GHCR → OCI OKE)
 
-- Reusable workflow: `.github/workflows/service-cd.yml`
-- Each Java service repo has `cd.yml` that calls it on push to `main` (build Docker image → Helm to Phoenix OKE).
-- Full matrix rollout: `.github/workflows/deploy-all.yml` (workflow_dispatch).
+- Reusable workflow: `.github/workflows/service-cd.yml` (Java 21 / Gradle 8.10, matches every service's own toolchain).
+- Each Java service repo's `cd.yml` calls it directly on push to `main` via `uses: ghorha/referral-infra/.github/workflows/service-cd.yml@main` + `secrets: inherit` (build Docker image → Helm to Phoenix OKE).
+- Fallback / full matrix rollout: `.github/workflows/deploy-service.yml` (single service) and `.github/workflows/deploy-all.yml` (all services), both `workflow_dispatch` — these don't depend on cross-repo secret resolution and still work unchanged if `secrets: inherit` ever fails.
 - Details and required org secrets: **`DEPLOYMENT.md`**.
 
 ## Fleet status dashboard
@@ -35,11 +37,13 @@ Live snapshot of branch drift and undeployed `main` commits:
 - **CI:** `.github/workflows/fleet-status.yml` (daily + `workflow_dispatch`) writes the snapshot via GitHub API + OKE.
 
 ## Test
+
 ```bash
 terraform validate (where applicable)
 ```
 
 ## Project layout
+
 ```
 deploy/         # Helm chart + values + ingress/secrets helpers
 terraform/      # OCI/AWS modules & environments
@@ -49,15 +53,18 @@ prometheus/
 ```
 
 ## GitHub
+
 `https://github.com/ghorha/referral-infra`
 
 ## Related
+
 - Product contracts: `ghorha/referral-product`
 - Deploy: `ghorha/referral-infra`
 - Cross-service tests: `ghorha/referral-tests`
 - AI skills/context: `ghorha/referral-agents`
 
 ## For AI agents
+
 Repo-local guidance lives in **`.okf/`** (`index.md` + `concepts/`). Read that before making structural changes.
 
 ## Keeping docs current
