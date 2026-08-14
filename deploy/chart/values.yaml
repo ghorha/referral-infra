@@ -15,6 +15,15 @@ fullnameOverride: ""
 # Default replica count. Ignored when hpa.enabled=true (the HPA owns replicas).
 replicas: 1
 
+# Rollout strategy. maxSurge:0 replaces a pod IN PLACE (kill old, then start new)
+# instead of the default surge-then-drain, so a rollout needs no spare node
+# capacity. Required on the single-node cluster where a surge pod can't schedule
+# (Insufficient cpu). Trade-off: a single-replica service has brief downtime
+# during its own rollout (acceptable — these are already replicas:1, no HA).
+strategy:
+  maxSurge: 0
+  maxUnavailable: 1
+
 image:
   # GHCR registry root — the org is now part of the registry path.
   # Images are PUBLIC on GHCR, so no image-pull secret is required.
@@ -58,7 +67,11 @@ envFrom: []
 # the fleet's ~4Gi of memory requests fits with plenty of headroom.
 resources:
   requests:
-    cpu: 100m
+    # 75m (was 100m): the single OKE node has ~1830m allocatable CPU and the fleet
+    # is now 14 services + redis + system. At 100m each they no longer fit; 75m
+    # keeps steady-state well under the node's capacity with headroom. Limits are
+    # unchanged, so a service can still burst to 500m under load.
+    cpu: 75m
     memory: 256Mi
   limits:
     cpu: 500m

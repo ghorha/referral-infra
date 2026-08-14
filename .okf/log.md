@@ -14,6 +14,17 @@ related:
 Chronological record of changes to this knowledge bundle and material changes to
 the codebase it describes. Newest first.
 
+- 2026-08-14: CAPACITY — the single OKE node (~1830m allocatable CPU) filled up
+  (~97% requested) once the fleet reached 14 services, so rolling-update surge
+  pods couldn't schedule (`FailedScheduling: Insufficient cpu`) and every
+  `helm --wait` timed out. Chart fix: (1) `resources.requests.cpu` 100m → 75m so
+  all 14 services + redis + system fit with headroom (limits unchanged at 500m,
+  so bursting still works); (2) added a `strategy` (RollingUpdate maxSurge:0,
+  maxUnavailable:1) so a rollout replaces a pod IN PLACE and needs no spare node
+  capacity. Single-replica services get a brief self-downtime during their own
+  rollout (already replicas:1, no HA). Both are chart-wide values in
+  `deploy/chart/values.yaml` + `templates/deployment.yaml`.
+
 - 2026-08-14: SECRETS — `fs-ai-keys` (referral-ai-service provider keys) is
   provisioned the same way as every other live secret: **directly via kubectl**
   on the Phoenix cluster, not OCI Vault/ESO. Added
