@@ -14,6 +14,17 @@ related:
 Chronological record of changes to this knowledge bundle and material changes to
 the codebase it describes. Newest first.
 
+- 2026-08-14: SECRETS — `fs-ai-keys` (referral-ai-service provider keys) is
+  provisioned the same way as every other live secret: **directly via kubectl**
+  on the Phoenix cluster, not OCI Vault/ESO. Added
+  `deploy/scripts/create-ai-secret.sh` (mirrors `create-db-secret.sh`; upserts
+  `fs-ai-keys` with any subset of OPENAI/ANTHROPIC/GEMINI keys, idempotent) and
+  documented it in `deploy/README.md` § Secrets. Flagged the stale, unused
+  `deploy/secrets/external-secrets.yaml` (+ its README) as **Chicago-era, not
+  applied on Phoenix** — its ClusterSecretStore points at a `us-chicago-1` vault
+  the `us-phoenix-1` cluster can't reach; region + vault OCID must be updated
+  before it's ever applied. No behavior change; docs/scripts only.
+
 - 2026-08-14: Identity de-duplication (Phase 3) deploy wiring.
   `deploy/values/referral-admin-service.yaml` gained `AUTH_SERVICE_URL:
 http://referral-auth-service:8081` (admin-service's `/api/v1/admin/identity/**`

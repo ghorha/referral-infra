@@ -1,5 +1,12 @@
 # Secret storage for the OKE cluster — OCI Vault + External Secrets Operator
 
+> **⚠️ Not the mechanism used on the current (Phoenix / `us-phoenix-1`) cluster.**
+> The live cluster provisions Secrets **directly with `kubectl`** — see
+> `../README.md` § Secrets and `../scripts/create-db-secret.sh` /
+> `../scripts/create-ai-secret.sh`. The OCI-Vault + ESO flow described below
+> (and `external-secrets.yaml`) targets a **`us-chicago-1`** vault and is kept
+> for reference only; update its region + vault OCID before ever applying it.
+
 Plaintext credentials never live in git or in raw manifests. They live in **OCI Vault** (encrypted
 at rest by a KMS key), and **External Secrets Operator (ESO)** syncs them into Kubernetes Secrets
 that the services already read via `envFrom`.
@@ -55,19 +62,19 @@ Prefer the CLI? `oci vault secret update-base64 --secret-id <ocid> --secret-cont
 
 ### What goes where
 
-| OCI Vault secret            | Becomes (K8s `fs-twilio`) | Value |
-|-----------------------------|---------------------------|-------|
-| `fs-twilio-account-sid`     | `TWILIO_ACCOUNT_SID`      | `AC…` Account SID |
-| `fs-twilio-api-key-sid`     | `TWILIO_API_KEY_SID`      | `SK…` API Key SID |
-| `fs-twilio-api-key-secret`  | `TWILIO_API_KEY_SECRET`   | API Key secret **(rotate the one pasted in chat first)** |
-| `fs-twilio-from-number`     | `TWILIO_FROM_NUMBER`      | `+1…` sender number |
+| OCI Vault secret           | Becomes (K8s `fs-twilio`) | Value                                                    |
+| -------------------------- | ------------------------- | -------------------------------------------------------- |
+| `fs-twilio-account-sid`    | `TWILIO_ACCOUNT_SID`      | `AC…` Account SID                                        |
+| `fs-twilio-api-key-sid`    | `TWILIO_API_KEY_SID`      | `SK…` API Key SID                                        |
+| `fs-twilio-api-key-secret` | `TWILIO_API_KEY_SECRET`   | API Key secret **(rotate the one pasted in chat first)** |
+| `fs-twilio-from-number`    | `TWILIO_FROM_NUMBER`      | `+1…` sender number                                      |
 
-| OCI Vault secret     | Becomes (K8s `fs-email`) | Value |
-|----------------------|--------------------------|-------|
-| `fs-email-provider`  | `EMAIL_PROVIDER`         | `dreamlit` or `smtp` |
-| `fs-email-api-base`  | `EMAIL_API_BASE`         | provider base URL (if API-based) |
-| `fs-email-api-key`   | `EMAIL_API_KEY`          | provider API key/token |
-| `fs-email-from`      | `EMAIL_FROM`             | e.g. `no-reply@referral.app` |
+| OCI Vault secret    | Becomes (K8s `fs-email`) | Value                            |
+| ------------------- | ------------------------ | -------------------------------- |
+| `fs-email-provider` | `EMAIL_PROVIDER`         | `dreamlit` or `smtp`             |
+| `fs-email-api-base` | `EMAIL_API_BASE`         | provider base URL (if API-based) |
+| `fs-email-api-key`  | `EMAIL_API_KEY`          | provider API key/token           |
+| `fs-email-from`     | `EMAIL_FROM`             | e.g. `no-reply@referral.app`     |
 
 ## Consuming a secret from a service
 
@@ -77,17 +84,17 @@ Add the synced secret to the service's Helm values `envFrom` (like `referral-db`
 ```yaml
 envFrom:
   - referral-db
-  - fs-email     # email creds
-  - fs-twilio    # sms creds
+  - fs-email # email creds
+  - fs-twilio # sms creds
 ```
 
 ## Notes
 
 - **Rotate the Twilio API-key secret** you pasted into chat — it's in the conversation log. Create a
-  new API key in the Twilio Console, store *that* one in the vault.
+  new API key in the Twilio Console, store _that_ one in the vault.
 - **Applied & verified** on `us-chicago-1` — ESO syncs `fs-twilio` + `fs-email`. The manifests use
   API `external-secrets.io/v1` (ESO v2.x no longer serves `v1beta1`). A `read vaults` grant was added
   to the policy to clear ESO's store-validation warning — `terraform apply` again to pick it up
-  (secret *reads* already work without it, via `secret-family`).
+  (secret _reads_ already work without it, via `secret-family`).
 - Rollback: `kubectl delete -f deploy/secrets/external-secrets.yaml` removes the sync (and the K8s
   Secrets it owns); the Vault values stay put.

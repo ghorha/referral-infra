@@ -61,8 +61,12 @@ kubectl apply -f base/namespace.yaml
 ## 2. Secrets (never commit real values)
 
 `base/secrets.example.yaml` is a TEMPLATE. Create the real Secrets imperatively
-so credentials never touch git. Four Secrets back the stack: `referral-db`, `referral-jwt`,
-`referral-s3`, `referral-smtp`.
+so credentials never touch git. These Secrets back the stack: `referral-db`, `referral-jwt`,
+`referral-s3`, `referral-smtp`, and `fs-ai-keys` (AI provider keys).
+
+> The Phoenix OKE cluster uses **direct `kubectl` Secrets** (below), not OCI
+> Vault / External Secrets. `deploy/secrets/external-secrets.yaml` is a
+> Chicago-era artifact and is **not** applied here.
 
 > Security: the Neon connection string was pasted into chat and is considered
 > **exposed** — rotate the Neon password before serving real data.
@@ -93,6 +97,15 @@ kubectl -n referral create secret generic referral-s3 \
 kubectl -n referral create secret generic referral-smtp \
   --from-literal=SMTP_HOST='<smtp-host>' \
   --from-literal=SMTP_PORT='587'
+
+# fs-ai-keys : AI provider API keys for referral-ai-service (any subset; a
+# missing key just disables that provider, leaving the deterministic `stub`).
+# Prefer the helper: OPENAI_API_KEY=... ANTHROPIC_API_KEY=... GEMINI_API_KEY=... \
+#   ./scripts/create-ai-secret.sh
+kubectl -n referral create secret generic fs-ai-keys \
+  --from-literal=OPENAI_API_KEY='sk-...' \
+  --from-literal=ANTHROPIC_API_KEY='sk-ant-...' \
+  --from-literal=GEMINI_API_KEY='AIza...'
 ```
 
 Each Secret's keys are projected verbatim as env vars (chart `envFrom`), so the
