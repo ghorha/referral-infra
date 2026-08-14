@@ -11,6 +11,10 @@ env:
   SPRING_PROFILES_ACTIVE: "prod"
   SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "3"
   SERVER_PORT: "8083"
+  # Shared flyway_schema_history: tolerate sibling-owned migrations (e.g. auth's
+  # V13) absent from this service's classpath, else Flyway validate crashes on
+  # restart. Runtime override so it applies even to already-built images.
+  SPRING_FLYWAY_IGNORE_MIGRATION_PATTERNS: "*:missing"
 envFrom:
   - referral-db
   - referral-jwt
