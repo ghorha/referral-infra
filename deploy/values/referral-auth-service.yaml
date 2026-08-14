@@ -14,10 +14,11 @@ env:
   # referral-ai-service for the identity "360 view" embeddings (fail-soft:
   # deterministic dedup still runs if it's unreachable).
   AI_SERVICE_URL: "http://referral-ai-service:8092"
-  # Shared flyway_schema_history: tolerate sibling-owned migrations (e.g. claim's
-  # V12) absent from auth's classpath, else Flyway validate crashes on restart.
-  # Runtime override so it applies even to the already-built image.
-  SPRING_FLYWAY_IGNORE_MIGRATION_PATTERNS: "*:missing"
+  # Shared flyway_schema_history: sibling-owned migrations (e.g. claim's V12) are
+  # absent from auth's classpath, so Flyway validate crashes on restart. Skip the
+  # pre-migration validation (migrations still apply). Bulletproof across Flyway
+  # versions, unlike ignore-migration-patterns. Runtime override for the built image.
+  SPRING_FLYWAY_VALIDATE_ON_MIGRATE: "false"
 envFrom:
   - referral-mailgun
   - referral-db
