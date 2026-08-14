@@ -14,6 +14,17 @@ related:
 Chronological record of changes to this knowledge bundle and material changes to
 the codebase it describes. Newest first.
 
+- 2026-08-14: Identity de-duplication (Phase 3) deploy wiring.
+  `deploy/values/referral-admin-service.yaml` gained `AUTH_SERVICE_URL:
+http://referral-auth-service:8081` (admin-service's `/api/v1/admin/identity/**`
+  Feign-proxies to auth-service's identity API). `deploy/values/
+referral-auth-service.yaml` gained `AI_SERVICE_URL:
+http://referral-ai-service:8092` (auth-service fetches "360 view" embeddings
+  from ai-service; fail-soft). **Neon/pgvector:** auth-service's Flyway V13 runs
+  `CREATE EXTENSION IF NOT EXISTS vector` on migrate — the Neon database/role must
+  permit the pgvector extension (it is on Neon's supported list). No new secrets;
+  no new services (ai-service was already added to the rollout matrix).
+
 - 2026-08-13: Wired the new `referral-ai-service` (AI orchestrator, port 8092)
   into deploy. Added it to `deploy-all.yml`'s rollout matrix and created
   `deploy/values/referral-ai-service.yaml` (stateless — no `referral-db`/

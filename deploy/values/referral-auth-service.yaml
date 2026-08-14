@@ -11,6 +11,9 @@ env:
   SPRING_PROFILES_ACTIVE: "staging"
   SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "3"
   SERVER_PORT: "8081"
+  # referral-ai-service for the identity "360 view" embeddings (fail-soft:
+  # deterministic dedup still runs if it's unreachable).
+  AI_SERVICE_URL: "http://referral-ai-service:8092"
 envFrom:
   - referral-mailgun
   - referral-db

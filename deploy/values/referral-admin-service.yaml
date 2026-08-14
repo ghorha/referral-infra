@@ -11,6 +11,8 @@ env:
   SPRING_PROFILES_ACTIVE: "prod"
   SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "3"
   SERVER_PORT: "8086"
+  # Feign target for the identity-dedup review proxy (/api/v1/admin/identity/**).
+  AUTH_SERVICE_URL: "http://referral-auth-service:8081"
 envFrom:
   - referral-db
   - referral-jwt
