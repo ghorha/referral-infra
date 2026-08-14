@@ -23,6 +23,7 @@ jobs:
           - { service: referral-analytics-service, port: 8089 }
           - { service: referral-audit-service, port: 8090 }
           - { service: referral-orchestration-service, port: 8091 }
+          - { service: referral-ai-service, port: 8092 }
     uses: ./.github/workflows/service-cd.yml
     with:
       service: ${{ matrix.service }}

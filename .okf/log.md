@@ -14,6 +14,15 @@ related:
 Chronological record of changes to this knowledge bundle and material changes to
 the codebase it describes. Newest first.
 
+- 2026-08-13: Wired the new `referral-ai-service` (AI orchestrator, port 8092)
+  into deploy. Added it to `deploy-all.yml`'s rollout matrix and created
+  `deploy/values/referral-ai-service.yaml` (stateless — no `referral-db`/
+  `referral-jwt`; `envFrom: [fs-ai-keys]` for the provider API keys, which ESO
+  already syncs from OCI Vault per `deploy/secrets/external-secrets.yaml`:
+  `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GEMINI_API_KEY`). Added a row to the
+  service/port/secrets table in `deploy/README.md`. No new secret plumbing was
+  needed — the `fs-ai-keys` ExternalSecret already existed for this purpose.
+
 ## 2026-07-10 — OKF bundle initialized
 
 - Initialized the `.okf/` Open Knowledge Format bundle (v0.1) at the workspace root.

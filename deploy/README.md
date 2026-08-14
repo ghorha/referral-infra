@@ -30,19 +30,20 @@ deploy/
 One chart, ten releases. The **release name is the object name** — deploy as
 `referral-auth-service`, `fs-family`, … so in-cluster DNS resolves to `http://fs-<svc>:<port>`.
 
-| Service | Port | Secrets (envFrom) |
-|---|---|---|
-| referral-auth-service | 8081 | referral-db, referral-jwt |
-| fs-family | 8082 | referral-db |
-| fs-sharing | 8083 | referral-db |
-| fs-profile | 8084 | referral-db |
-| fs-calendar | 8085 | referral-db |
-| fs-escalation | 8086 | referral-db |
-| fs-notification | 8087 | referral-db, referral-smtp |
-| fs-media | 8088 | referral-db, referral-s3 |
-| fs-integration | 8089 | referral-db |
-| fs-assistant | 8091 | referral-internal-auth |
-| referral-api-gateway (Envoy) | 8080 | — |
+| Service                      | Port | Secrets (envFrom)          |
+| ---------------------------- | ---- | -------------------------- |
+| referral-auth-service        | 8081 | referral-db, referral-jwt  |
+| fs-family                    | 8082 | referral-db                |
+| fs-sharing                   | 8083 | referral-db                |
+| fs-profile                   | 8084 | referral-db                |
+| fs-calendar                  | 8085 | referral-db                |
+| fs-escalation                | 8086 | referral-db                |
+| fs-notification              | 8087 | referral-db, referral-smtp |
+| fs-media                     | 8088 | referral-db, referral-s3   |
+| fs-integration               | 8089 | referral-db                |
+| fs-assistant                 | 8091 | referral-internal-auth     |
+| referral-ai-service          | 8092 | fs-ai-keys                 |
+| referral-api-gateway (Envoy) | 8080 | —                          |
 
 ## Prerequisites
 
@@ -152,7 +153,7 @@ done
 Chart defaults are tuned for the 4 OCPU / 24 GB Arm cluster shared by ~11 pods:
 
 - requests: `cpu: 100m`, `memory: 256Mi`
-- limits:   `cpu: 500m`, `memory: 512Mi`
+- limits: `cpu: 500m`, `memory: 512Mi`
 - `JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=70.0` (chart-wide default env) keeps
   each JVM heap (~358Mi max) inside the 512Mi memory limit.
 - HPA is **disabled by default** (no autoscaling headroom on free tier); it stays
@@ -203,4 +204,7 @@ See `ingress/` for those manifests and their README. Point the
   (and `SMTP_USER`/`SMTP_PASS` for a real relay).
 - The production JWT issuer (keep identity + gateway in sync).
 - DNS + cert-manager issuer config for TLS (see `ingress/`).
+
+```
+
 ```

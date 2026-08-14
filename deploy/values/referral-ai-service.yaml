@@ -1,0 +1,21 @@
+image:
+  repository: referral-ai-service
+port: 8092
+replicas: 1
+hpa:
+  enabled: false
+pdb:
+  enabled: false
+env:
+  SPRING_PROFILES_ACTIVE: "prod"
+  SERVER_PORT: "8092"
+  # Provider order; a provider is only used when its API key (from the
+  # referral-ai secret below) is present. The `stub` provider is always last so
+  # the service stays up even if every real provider key is missing/rotated.
+  AI_PROVIDER_ORDER: "openai,anthropic,gemini,stub"
+# No referral-db / referral-jwt: this service is stateless and does its own
+# provider-key auth, not JWT. It only needs the provider API keys, which ESO
+# syncs from OCI Vault into the `fs-ai-keys` secret (OPENAI_API_KEY,
+# ANTHROPIC_API_KEY, GEMINI_API_KEY) — see deploy/secrets/external-secrets.yaml.
+envFrom:
+  - fs-ai-keys
