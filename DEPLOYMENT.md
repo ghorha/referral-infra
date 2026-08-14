@@ -52,6 +52,27 @@ Set on the `ghorha` GitHub org (visibility: all repos):
 
 Frontend also needs `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`.
 
+## One-time cluster secrets (bootstrap)
+
+Before the first deploy, create the in-cluster Secrets the services read via
+`envFrom`. The Phoenix cluster uses **direct `kubectl` Secrets** (not OCI
+Vault/ESO). Point kubectl at Phoenix OKE, then run the helpers in
+`deploy/scripts/` (full commands + key names in `deploy/README.md` § Secrets):
+
+```bash
+oci ce cluster create-kubeconfig --cluster-id "$OKE_CLUSTER_OCID" --region us-phoenix-1 \
+  --file $HOME/.kube/config --token-version 2.0.0 --kube-endpoint PUBLIC_ENDPOINT
+
+NEON_PASSWORD=... ./deploy/scripts/create-db-secret.sh            # referral-db, referral-jwt
+OPENAI_API_KEY=... ANTHROPIC_API_KEY=... GEMINI_API_KEY=... \
+  ./deploy/scripts/create-ai-secret.sh                            # fs-ai-keys (referral-ai-service)
+# referral-s3 / referral-smtp: see deploy/README.md § Secrets
+```
+
+Each Secret must exist **before** the pods that `envFrom` it start (a missing
+Secret → `CreateContainerConfigError`). `referral-ai-service` needs `fs-ai-keys`;
+a missing provider key simply falls back to the deterministic `stub` provider.
+
 ## Cross-repo secrets
 
 `service-cd.yml` lives in **referral-infra**. Callers in other repos use

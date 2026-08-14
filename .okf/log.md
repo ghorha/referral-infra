@@ -23,7 +23,9 @@ the codebase it describes. Newest first.
   `deploy/secrets/external-secrets.yaml` (+ its README) as **Chicago-era, not
   applied on Phoenix** — its ClusterSecretStore points at a `us-chicago-1` vault
   the `us-phoenix-1` cluster can't reach; region + vault OCID must be updated
-  before it's ever applied. No behavior change; docs/scripts only.
+  before it's ever applied. No behavior change; docs/scripts only. Also added a
+  "One-time cluster secrets (bootstrap)" section to `DEPLOYMENT.md` sequencing
+  `create-db-secret.sh` + `create-ai-secret.sh` before the first deploy.
 
 - 2026-08-14: Identity de-duplication (Phase 3) deploy wiring.
   `deploy/values/referral-admin-service.yaml` gained `AUTH_SERVICE_URL:
