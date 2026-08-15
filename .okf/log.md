@@ -14,6 +14,15 @@ related:
 Chronological record of changes to this knowledge bundle and material changes to
 the codebase it describes. Newest first.
 
+- 2026-08-15: CONFIG — email-only signup. Set `SIGNUP_REQUIRE_PHONE: "false"` on
+  the auth-service deploy values (`deploy/values/referral-auth-service.yaml`) so
+  accounts activate on a verified email alone (SMS OTP isn't provisioned yet — no
+  Twilio secret, `PHONE_VERIFICATION_ENABLED` defaults false, so the phone OTP is
+  only logged and never delivered). Paired with an auth-service code change
+  (`AuthService.completeVerification` now honors the flag). Flip back to `"true"`
+  (and add a `referral-twilio` secret + `PHONE_VERIFICATION_ENABLED=true`) once
+  SMS is live.
+
 - 2026-08-14: CAPACITY — the single OKE node (~1830m allocatable CPU) filled up
   (~97% requested) once the fleet reached 14 services, so rolling-update surge
   pods couldn't schedule (`FailedScheduling: Insufficient cpu`) and every

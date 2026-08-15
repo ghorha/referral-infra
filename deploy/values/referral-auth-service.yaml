@@ -19,6 +19,9 @@ env:
   # pre-migration validation (migrations still apply). Bulletproof across Flyway
   # versions, unlike ignore-migration-patterns. Runtime override for the built image.
   SPRING_FLYWAY_VALIDATE_ON_MIGRATE: "false"
+  # Email-only signup: accounts activate on verified email alone (no SMS OTP).
+  # Flip back to "true" once Twilio SMS is provisioned + PHONE_VERIFICATION_ENABLED=true.
+  SIGNUP_REQUIRE_PHONE: "false"
 envFrom:
   - referral-mailgun
   - referral-db
