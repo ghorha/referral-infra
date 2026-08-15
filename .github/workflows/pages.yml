@@ -1,0 +1,52 @@
+name: Publish QA dashboard (Pages)
+
+# Publishes the Vouch QA dashboard to this (public) repo's GitHub Pages.
+#
+# The dashboard's source of truth lives in the PRIVATE ghorha/referral-tests
+# repo (dashboard/ + execution-history/). Private-repo Pages needs a paid plan,
+# so we publish it here on referral-infra (public): this workflow checks out
+# referral-tests via GH_PAT, rebuilds data.json from its execution-history, and
+# deploys the dashboard/ folder.
+#
+# Triggers: manual, nightly, and dispatched by referral-tests' regression.yml
+# right after it records a new run.
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '17 3 * * *'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Checkout referral-tests (dashboard source)
+        uses: actions/checkout@v4
+        with:
+          repository: ghorha/referral-tests
+          token: ${{ secrets.GH_PAT }}
+          path: referral-tests
+
+      - name: Rebuild dashboard data from execution-history
+        working-directory: referral-tests
+        run: python3 scripts/qa/build_dashboard_data.py || true
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: referral-tests/dashboard
+
+      - id: deploy
+        uses: actions/deploy-pages@v4

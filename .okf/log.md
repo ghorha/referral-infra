@@ -14,6 +14,15 @@ related:
 Chronological record of changes to this knowledge bundle and material changes to
 the codebase it describes. Newest first.
 
+- 2026-08-15: CI — QA dashboard on GitHub Pages. `pages.yml` publishes the Vouch
+  QA dashboard to this (public) repo's Pages at
+  https://ghorha.github.io/referral-infra/ . Source of truth is the PRIVATE
+  referral-tests repo (private-repo Pages needs a paid plan), so this workflow
+  checks out referral-tests via GH_PAT, rebuilds `dashboard/data.json` from its
+  execution-history, and deploys `dashboard/`. Runs on manual dispatch, nightly,
+  and dispatched by referral-tests' regression.yml right after it records a run.
+  Enabled via `gh api -X POST repos/ghorha/referral-infra/pages -f build_type=workflow`.
+
 - 2026-08-15: CI — post-deploy regression. `deploy-service.yml` gained a
   `post-deploy-regression` job (`needs: deploy`) that, after a successful
   rollout, dispatches `referral-tests`' `regression.yml` (via `GH_PAT`) against
