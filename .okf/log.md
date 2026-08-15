@@ -14,6 +14,15 @@ related:
 Chronological record of changes to this knowledge bundle and material changes to
 the codebase it describes. Newest first.
 
+- 2026-08-15: CI — post-deploy regression. `deploy-service.yml` gained a
+  `post-deploy-regression` job (`needs: deploy`) that, after a successful
+  rollout, dispatches `referral-tests`' `regression.yml` (via `GH_PAT`) against
+  the frontend (`vars.FRONTEND_BASE_URL`, default the Vercel app) with
+  `live_backend=true record=true`. That workflow runs the live Playwright suite,
+  records it into `referral-tests/execution-history`, and rebuilds the dashboard.
+  Since service-cd waits for `helm --wait`, the new pod is Ready before the
+  regression fires.
+
 - 2026-08-15: CONFIG — email-only signup. Set `SIGNUP_REQUIRE_PHONE: "false"` on
   the auth-service deploy values (`deploy/values/referral-auth-service.yaml`) so
   accounts activate on a verified email alone (SMS OTP isn't provisioned yet — no

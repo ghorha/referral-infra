@@ -37,3 +37,24 @@ jobs:
       OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_CLI_KEY_CONTENT }}
       OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
       OKE_CLUSTER_OCID: ${{ secrets.OKE_CLUSTER_OCID }}
+
+  # After a successful rollout (service-cd waits for `helm --wait`, so the new
+  # pod is Ready here), kick off the live regression against the frontend. It
+  # records the result into referral-tests/execution-history (the dashboard).
+  post-deploy-regression:
+    needs: deploy
+    if: success()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger referral-tests regression
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          FRONTEND_BASE_URL: ${{ vars.FRONTEND_BASE_URL || 'https://referral-frontend-ten.vercel.app' }}
+        run: |
+          set -euo pipefail
+          gh workflow run regression.yml \
+            --repo ghorha/referral-tests \
+            -f base_url="${FRONTEND_BASE_URL}" \
+            -f live_backend=true \
+            -f record=true
+          echo "Dispatched referral-tests regression against ${FRONTEND_BASE_URL}"
