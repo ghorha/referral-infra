@@ -51,13 +51,12 @@ permissions:
 jobs:
   build-and-deploy:
     name: "build-and-deploy (${{ inputs.service }})"
-    runs-on: [self-hosted, macOS, ARM64]
-    # Generous overall ceiling (bootJar + image build/push + Helm rollout), but
-    # bounded so a wedged Docker daemon can't silently occupy a runner for
-    # hours (this happened in practice: only 2 self-hosted runners total, and
-    # one stuck `docker build`/`docker build-push-action` step starved every
-    # other queued CI/CD job for over an hour). See the step-level timeout
-    # below for the specific step this is guarding against.
+    # GitHub-hosted runner (referral-infra has free Actions minutes). The former
+    # self-hosted macOS runner was the deploy bottleneck: slow/wedge-prone arm64
+    # Docker + it slept mid-rollout, timing out every deploy. ubuntu-latest is
+    # fast and always-on; it builds the linux/arm64 image via QEMU (trivial now
+    # that the Dockerfiles copy the pre-built jar instead of compiling in-image).
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - name: Validate ref
@@ -123,6 +122,9 @@ jobs:
           # Keep buildx from falling back to the shared ~/.docker config.
           echo "DOCKER_CONFIG=${DOCKER_CONFIG}" >> "$GITHUB_PATH" || true
 
+      - name: Set up QEMU (build linux/arm64 on an amd64 runner)
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -140,6 +142,12 @@ jobs:
           tags: |
             ghcr.io/ghorha/${{ inputs.service }}:${{ steps.meta.outputs.sha }}
             ghcr.io/ghorha/${{ inputs.service }}:latest
+
+      - name: Install OCI CLI (GitHub-hosted runner)
+        run: |
+          set -euo pipefail
+          python3 -m pip install --user --upgrade oci-cli
+          echo "${HOME}/.local/bin" >> "$GITHUB_PATH"
 
       - name: Configure kubeconfig for OKE
         env:

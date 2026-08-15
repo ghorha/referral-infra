@@ -148,3 +148,13 @@ External‑credential blockers (Stripe, Mailgun, Google OAuth, Google Vision OCR
   runner's terminal log and the Actions UI clearly show which service is
   deploying (previously just "deploy / build-and-deploy" with no service
   identity visible without opening the run).
+
+- 2026-08-14: CD moved to GitHub-hosted `ubuntu-latest` (referral-infra has free
+  Actions minutes). The self-hosted macOS runner was the deploy bottleneck —
+  slow/wedge-prone arm64 Docker + it slept mid-rollout, so deploys timed out at
+  ~30 min for hours and services sat on stale images. `service-cd.yml`
+  `runs-on: [self-hosted, macOS, ARM64]` → `ubuntu-latest`; added
+  `docker/setup-qemu-action` (build linux/arm64 on amd64 — trivial now the
+  Dockerfiles copy the pre-built jar) and an `Install OCI CLI` step (the Mac had
+  it pre-installed; ubuntu doesn't). `deploy-all.yml`/`deploy-service.yml` inherit
+  it via the reusable workflow; `fleet-status.yml` stays self-hosted (status only).
