@@ -37,3 +37,25 @@ jobs:
       OCI_CLI_KEY_CONTENT: ${{ secrets.OCI_CLI_KEY_CONTENT }}
       OCI_CLI_REGION: ${{ secrets.OCI_CLI_REGION }}
       OKE_CLUSTER_OCID: ${{ secrets.OKE_CLUSTER_OCID }}
+
+  # One regression run after the whole fleet has rolled out (not per service).
+  # Runs whether or not every leg succeeded so the dashboard records the
+  # post-rollout state; never blocks the deploy.
+  post-deploy-regression:
+    needs: rollout
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Trigger referral-tests regression
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          FRONTEND_BASE_URL: ${{ vars.FRONTEND_BASE_URL || 'https://referral-frontend-ten.vercel.app' }}
+        run: |
+          set -euo pipefail
+          gh workflow run regression.yml \
+            --repo ghorha/referral-tests \
+            -f base_url="${FRONTEND_BASE_URL}" \
+            -f live_backend=true \
+            -f record=true
+          echo "Dispatched referral-tests regression against ${FRONTEND_BASE_URL}"

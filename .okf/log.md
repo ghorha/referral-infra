@@ -21,7 +21,11 @@ the codebase it describes. Newest first.
   `live_backend=true record=true`. That workflow runs the live Playwright suite,
   records it into `referral-tests/execution-history`, and rebuilds the dashboard.
   Since service-cd waits for `helm --wait`, the new pod is Ready before the
-  regression fires.
+  regression fires. `deploy-all.yml` has the same trigger as a single job
+  (`needs: rollout`, `if: !cancelled()`) that fires once after the whole fleet
+  rolls out (not per service). Both jobs are `continue-on-error: true` so a
+  dispatch hiccup never masks a successful deploy. Set the `FRONTEND_BASE_URL`
+  repo variable so the base URL isn't a hardcoded fallback.
 
 - 2026-08-15: CONFIG — email-only signup. Set `SIGNUP_REQUIRE_PHONE: "false"` on
   the auth-service deploy values (`deploy/values/referral-auth-service.yaml`) so
