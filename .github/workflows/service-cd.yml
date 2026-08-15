@@ -248,5 +248,4 @@ jobs:
             --set image.tag="${SHA}" \
             --set port="${PORT}" \
             --set 'imagePullSecrets[0].name=ghcr-pull' \
-            --force-conflicts \
             --wait --timeout 10m
