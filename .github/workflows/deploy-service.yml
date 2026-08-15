@@ -45,6 +45,9 @@ jobs:
     needs: deploy
     if: success()
     runs-on: ubuntu-latest
+    # Never let a dispatch hiccup mask a successful deploy — the rollout already
+    # succeeded by the time this runs.
+    continue-on-error: true
     steps:
       - name: Trigger referral-tests regression
         env:
