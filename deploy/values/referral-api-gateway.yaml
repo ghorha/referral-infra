@@ -21,6 +21,8 @@ env:
   ANALYTICS_SERVICE_URL: "http://referral-analytics-service:8089"
   AUDIT_SERVICE_URL: "http://referral-audit-service:8090"
   ORCHESTRATION_SERVICE_URL: "http://referral-orchestration-service:8091"
+  # Routes /api/v1/ai/** (incl. the optional-auth /api/v1/ai/assistant) to ai-service.
+  AI_SERVICE_URL: "http://referral-ai-service:8092"
 envFrom:
   - referral-redis
   - referral-jwt

@@ -11,6 +11,12 @@ related:
 
 # OKF Change Ledger
 
+- 2026-08-19: GATEWAY ENV — `deploy/values/referral-api-gateway.yaml` gained
+  `AI_SERVICE_URL: http://referral-ai-service:8092`. The gateway routes `/api/v1/ai/**`
+  (incl. the new optional-auth `/api/v1/ai/assistant`) to ai-service, but the env var
+  was missing so the route fell back to `localhost:8092` and 504'd. Applied live via
+  `kubectl set env deploy/referral-api-gateway AI_SERVICE_URL=...` and made durable here.
+
 Chronological record of changes to this knowledge bundle and material changes to
 the codebase it describes. Newest first.
 
