@@ -11,6 +11,17 @@ related:
 
 # OKF Change Ledger
 
+- 2026-08-20: TOOLING — added `scripts/purge-test-data.sh`, a one-shot purge of
+  fake/QA/seed data from an environment's shared DB. Test data = everything anchored
+  to a user whose email matches a test domain (default `example.com`, the reserved QA
+  seed domain); the script removes that user + all owned/referenced rows (listings,
+  transactions & their evidence/messages/events, reviews + review_grants, ledger rows,
+  businesses→programs, devices, identity_*, notifications, trust_profiles, matching
+  email_outbox, and their audit_logs) in FK-safe order inside one transaction.
+  **DRY RUN by default** (prints matched counts, changes nothing); requires `--confirm`
+  (or `CONFIRM=DELETE`) to apply. Connection comes from the `referral-db` k8s secret
+  (override via `PG_CONNINFO`). `flyway_schema_history` is never touched.
+
 - 2026-08-19: GATEWAY ENV — `deploy/values/referral-api-gateway.yaml` gained
   `AI_SERVICE_URL: http://referral-ai-service:8092`. The gateway routes `/api/v1/ai/**`
   (incl. the new optional-auth `/api/v1/ai/assistant`) to ai-service, but the env var

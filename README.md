@@ -36,6 +36,29 @@ Live snapshot of branch drift and undeployed `main` commits:
   ```
 - **CI:** `.github/workflows/fleet-status.yml` (daily + `workflow_dispatch`) writes the snapshot via GitHub API + OKE.
 
+## Purge test / seed data
+
+Remove all fake/QA/seed data (users on a test email domain + everything they own or
+reference) from an environment's shared DB. **Dry run by default** — it prints the row
+counts it would delete and changes nothing; pass `--confirm` to apply. Deletes run in a
+single transaction in foreign-key-safe order; `flyway_schema_history` is never touched.
+
+```bash
+export KUBECONFIG=$HOME/.kube/ghorha-phoenix.config   # connection is read from the referral-db secret
+
+./scripts/purge-test-data.sh                 # dry run: preview what would be deleted
+./scripts/purge-test-data.sh --confirm       # actually delete (test data on example.com)
+
+# custom test domains, or a direct connection instead of the k8s secret:
+TEST_EMAIL_DOMAINS="example.com,test.local" ./scripts/purge-test-data.sh --confirm
+PG_CONNINFO="host=... dbname=... user=... sslmode=require" PGPASSWORD=... ./scripts/purge-test-data.sh
+```
+
+"Test data" = any user whose email matches a test domain (default `example.com`, the
+reserved QA seed domain) plus their listings, transactions, reviews, ledger rows,
+businesses/programs, devices, identity rows, notifications, trust profiles, matching
+`email_outbox` rows, and their `audit_logs`.
+
 ## Test
 
 ```bash
