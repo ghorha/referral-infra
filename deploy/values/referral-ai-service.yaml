@@ -12,7 +12,11 @@ env:
   # Provider order; a provider is only used when its API key (from the
   # referral-ai secret below) is present. The `stub` provider is always last so
   # the service stays up even if every real provider key is missing/rotated.
-  AI_PROVIDER_ORDER: "openai,anthropic,gemini,stub"
+  # anthropic/gemini are ahead of openai for now: the vaulted OPENAI_API_KEY is
+  # an Azure-style key that 401s against api.openai.com, so leading with openai
+  # adds a guaranteed failed call (~1s) to every completion. Restore openai
+  # first once the key is fixed in OCI Vault.
+  AI_PROVIDER_ORDER: "anthropic,gemini,openai,stub"
 # No referral-db / referral-jwt: this service is stateless and does its own
 # provider-key auth, not JWT. It only needs the provider API keys, which ESO
 # syncs from OCI Vault into the `fs-ai-keys` secret (OPENAI_API_KEY,
