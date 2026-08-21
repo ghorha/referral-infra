@@ -4,12 +4,21 @@ type: log
 id: okf-log
 title: "OKF Change Ledger"
 tags: [ledger, changelog]
-updated: 2026-07-10
+updated: 2026-08-21
 related:
   - ./index.md
 ---
 
 # OKF Change Ledger
+
+- 2026-08-21: AI-SERVICE ENV — `deploy/values/referral-ai-service.yaml`
+  `AI_PROVIDER_ORDER` reordered to `anthropic,gemini,openai,stub` (was
+  `openai,anthropic,gemini,stub`). The vaulted `OPENAI_API_KEY` is an
+  Azure-style key that 401s against api.openai.com, so leading with openai
+  added a guaranteed failed call (~1s) to every completion — and, before the
+  ai-service blank-base-url fix, dropped everything to the stub, which blocked
+  listing creation ("Verification confidence is unavailable"). Restore openai
+  first once the key is fixed in OCI Vault.
 
 - 2026-08-20: TOOLING — added `scripts/purge-test-data.sh`, a one-shot purge of
   fake/QA/seed data from an environment's shared DB. Test data = everything anchored
